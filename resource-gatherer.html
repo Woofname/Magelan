@@ -1,0 +1,3517 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地區資源採集助手 (九大地形過濾整合版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #090d16;
+            color: #f1f5f9;
+        }
+        .accordion-header {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .accordion-header .arrow {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .accordion-header.open .arrow {
+            transform: rotate(180deg);
+        }
+        
+        /* CSS Grid 動態高度過渡 */
+        .accordion-content {
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .accordion-content.open {
+            grid-template-rows: 1fr;
+        }
+        .accordion-inner {
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .resource-table th, .resource-table td {
+            border: 1px solid #1e293b;
+        }
+        .resource-table th {
+            background-color: #111827;
+        }
+        
+        /* 採集高亮特效：金色/紫色流光脈衝 */
+        .highlight-row {
+            background: linear-gradient(90deg, rgba(245, 158, 11, 0.25) 0%, rgba(245, 158, 11, 0.05) 100%) !important;
+            border: 2px solid #f59e0b !important;
+            box-shadow: inset 0 0 12px rgba(245, 158, 11, 0.3);
+            animation: pulse-border 1.5s infinite ease-in-out;
+            transform: scale(1.005);
+            transition: all 0.3s ease;
+        }
+        
+        .search-highlight {
+            background-color: rgba(99, 102, 241, 0.25) !important;
+            border: 1px solid #818cf8 !important;
+        }
+        .highlight-text {
+            color: #f59e0b;
+            font-weight: 700;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% { border-color: #f59e0b; }
+            50% { border-color: #fbbf24; }
+        }
+
+        /* 備用技能挽救面版：紅色緊急警告脈衝 */
+        @keyframes pulse-red {
+            0%, 100% { border-color: rgba(244, 63, 94, 0.4); box-shadow: 0 0 8px rgba(244, 63, 94, 0.1); }
+            50% { border-color: rgba(244, 63, 94, 0.9); box-shadow: 0 0 20px rgba(244, 63, 94, 0.45); }
+        }
+        .pulse-red-border {
+            animation: pulse-red 1.8s infinite ease-in-out;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.9) 0%, rgba(136, 19, 55, 0.15) 100%) !important;
+        }
+
+        /* 骰子晃動動畫 */
+        @keyframes dice-shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-3deg); }
+            20% { transform: translate(-3px, 0px) rotate(3deg); }
+            30% { transform: translate(0px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(2px, 1px) rotate(-2deg); }
+            80% { transform: translate(-1px, -1px) rotate(2deg); }
+            90% { transform: translate(2px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        .dice-rolling {
+            animation: dice-shake 0.15s infinite;
+        }
+
+        /* 自訂滾動條 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090d16;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+    </style>
+</head>
+<body class="p-4 sm:p-6 md:p-8 min-h-screen">
+    <div class="max-w-7xl mx-auto">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2 bg-gradient-to-r from-amber-400 via-indigo-400 to-amber-400 bg-clip-text text-transparent">
+                地區資源採集助手
+            </h1>
+            <p class="text-gray-400 text-sm sm:text-base max-w-2xl mx-auto">
+                專為獵人與 DM 打造。整合 **「複選地貌獨立過濾系統、雙向控制台同步連動、階梯式失敗下修挽救檢定與 X-Y 軸定位模擬器」**。
+            </p>
+        </header>
+
+        <!-- 雙欄配置：左側控制台(固定) / 右側頁籤切換內容 -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <div class="lg:col-span-5 space-y-6 lg:sticky lg:top-4 max-h-[calc(100vh-4rem)] overflow-y-auto pr-1">
+                
+                <!-- 模擬控制面板 -->
+                <div class="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-xl backdrop-blur-md">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+                        <h2 class="text-lg font-bold text-slate-200 flex items-center gap-2">
+                            <span>🎲</span> 採集求生模擬控制台
+                        </h2>
+                        <span class="px-2 py-0.5 bg-indigo-500/20 text-indigo-400 text-xs rounded border border-indigo-500/30">D&D 5e Rules</span>
+                    </div>
+
+                    <!-- 步驟一：選擇地形與等級 -->
+                    <div class="space-y-3 mb-4">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label class="block text-xs font-semibold text-slate-400">1. 選擇冒險地形</label>
+                                <span id="terrain-filter-status-left" class="text-[10px] text-indigo-400 font-medium bg-indigo-950/40 px-1.5 py-0.2 rounded border border-indigo-900/30 max-w-[150px] truncate">全地形</span>
+                            </div>
+                            <select id="sim-terrain" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-200"></select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">2. 玩家當前等級</label>
+                                <select id="sim-level" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none text-slate-200"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-400 mb-1">3. 技能檢定加值</label>
+                                <div class="flex">
+                                    <button onclick="adjustMod(-1)" class="px-3 bg-slate-800 hover:bg-slate-700 rounded-l-lg text-sm border-y border-l border-slate-700 text-slate-200">-</button>
+                                    <input type="number" id="sim-modifier" value="0" class="w-full bg-slate-950 border-y border-slate-800 text-center text-sm focus:outline-none text-slate-200">
+                                    <button onclick="adjustMod(1)" class="px-3 bg-slate-800 hover:bg-slate-700 rounded-r-lg text-sm border-y border-r border-slate-700 text-slate-200">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 步驟二：選擇適用技能與呈現對應 DC -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold text-slate-400 mb-2">4. 選擇使用的檢定技能</label>
+                        <div class="grid grid-cols-3 gap-2" id="skill-selector-container">
+                            <!-- 由 JS 動態繪製與裝載 DC -->
+                        </div>
+                    </div>
+
+                    <!-- 優勢與劣勢選擇按鈕 -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold text-slate-400 mb-1.5">5. 選擇 D20 判定狀態</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button" id="roll-mode-normal" class="py-1.5 text-xs font-bold rounded-lg border bg-indigo-600/30 border-indigo-500 text-indigo-200 ring-1 ring-indigo-500/30 transition-all flex items-center justify-center gap-1 cursor-pointer">
+                                ⚖️ 正常
+                            </button>
+                            <button type="button" id="roll-mode-advantage" class="py-1.5 text-xs font-bold rounded-lg border bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700 transition-all flex items-center justify-center gap-1 cursor-pointer">
+                                🟢 優勢
+                            </button>
+                            <button type="button" id="roll-mode-disadvantage" class="py-1.5 text-xs font-bold rounded-lg border bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700 transition-all flex items-center justify-center gap-1 cursor-pointer">
+                                🔴 劣勢
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 投擲按鈕 -->
+                    <button id="btn-roll-check" class="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-sm font-semibold transition-all duration-300 shadow-lg flex justify-center items-center gap-2 cursor-pointer">
+                        <span>🎲</span> 進行地形檢定 (1d20)
+                    </button>
+
+                    <!-- 檢定結果動態回饋區 -->
+                    <div id="check-result-panel" class="mt-4 p-4 rounded-xl bg-slate-950/60 border border-slate-800 hidden transition-all">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs text-slate-400">檢定結果公式</span>
+                            <span id="check-status-badge" class="px-2 py-0.5 text-[10px] font-bold rounded"></span>
+                        </div>
+                        <div class="flex items-center justify-center space-x-4 mb-3">
+                            <div id="d20-dice-visual" class="w-12 h-12 rounded-xl bg-indigo-950 border border-indigo-500/40 text-indigo-400 font-bold text-xl flex items-center justify-center shadow-inner">20</div>
+                            <div class="text-left">
+                                <p id="check-formula-text" class="text-sm font-semibold text-slate-300"></p>
+                                <p id="check-desc-text" class="text-xs text-slate-400 mt-0.5"></p>
+                            </div>
+                        </div>
+
+                        <!-- 成功時觸發的座標擲骰區 -->
+                        <div id="coordinate-roll-section" class="mt-3 pt-3 border-t border-slate-800 hidden">
+                            <p class="text-xs font-semibold text-slate-300 mb-2">✦ 檢定成功！請進行 X / Y 軸座標定位：</p>
+                            <div class="grid grid-cols-2 gap-2 mb-3">
+                                <div class="bg-slate-950 p-2 rounded-lg border border-slate-850 text-center">
+                                    <div class="text-[10px] text-slate-500 font-bold">X 座標 (欄位)</div>
+                                    <div id="dice-x-val" class="text-lg font-bold text-slate-300 mt-0.5">-</div>
+                                </div>
+                                <div class="bg-slate-950 p-2 rounded-lg border border-slate-850 text-center">
+                                    <div class="text-[10px] text-slate-500 font-bold">Y 座標 (1d6)</div>
+                                    <div id="dice-y-val" class="text-lg font-bold text-slate-300 mt-0.5">-</div>
+                                </div>
+                            </div>
+                            <button id="btn-roll-coordinates" class="w-full py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg text-xs font-bold transition-colors flex justify-center items-center gap-1.5 shadow-md cursor-pointer">
+                                <span>🔮</span> 擲骰定位並尋找材料
+                            </button>
+                        </div>
+
+                        <!-- 失敗挽救與下修提醒區（帶有炫目紅色呼吸邊框特效） -->
+                        <div id="failure-rescue-section" class="mt-4 p-4 rounded-xl border hidden transition-all pulse-red-border">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="text-lg">❌</span>
+                                <p id="rescue-headline" class="text-sm font-bold text-rose-400">緊急指令：進行備用技能挽救！</p>
+                            </div>
+                            <p id="rescue-instructions" class="text-[11px] text-slate-300 leading-relaxed mb-4 border-b border-rose-950/60 pb-2">
+                                您的前一項主動檢定未達 DC。依據採集規則：<b>今日對照表將自動下修一階。</b><br>
+                                現在，您可以改用該資源對應的 <b>備用技能</b> 進行挽救檢定！若再次失敗，將繼續向下一個階級挑戰。
+                            </p>
+                            
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-[10px] text-slate-400 font-bold mb-1">🔍 選擇嘗試挽救的資源類別：</label>
+                                    <select id="rescue-category" class="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:ring-1 focus:ring-rose-500"></select>
+                                </div>
+                                <div class="bg-slate-950/80 p-2.5 rounded border border-rose-950/50 text-xs text-slate-300 space-y-1">
+                                    <div>備用技能：<span id="rescue-skill-tip" class="text-rose-400 font-bold"></span></div>
+                                    <div>挑戰難度：<span class="text-amber-500 font-extrabold">DC <span id="rescue-dc-tip"></span></span></div>
+                                </div>
+                                <div class="flex gap-2 items-center">
+                                    <div class="flex-grow flex items-center bg-slate-950 rounded border border-slate-800 overflow-hidden">
+                                        <span class="text-[10px] font-bold text-slate-500 pl-2 pr-1 uppercase">MOD</span>
+                                        <input type="number" id="rescue-modifier" placeholder="加值" class="w-full bg-slate-950 px-2 py-1.5 text-xs text-center text-slate-200 focus:outline-none">
+                                    </div>
+                                    <button id="btn-roll-rescue" class="flex-1 py-1.5 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white rounded text-xs font-bold transition-all shadow-md cursor-pointer">
+                                        🎲 投擲挽救 (1d20)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 採集收納包 -->
+                <div class="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 shadow-xl backdrop-blur-md">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+                        <h3 class="text-sm font-bold text-slate-200 flex items-center gap-1.5">
+                            <span>🎒</span> 採集背包 (<span id="backpack-count">0</span>)
+                        </h3>
+                        <div class="flex gap-2">
+                            <button onclick="copyBackpack()" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 rounded text-[11px] font-medium text-slate-200 flex items-center gap-1 transition-all cursor-pointer">
+                                📋 複製報告
+                            </button>
+                            <button onclick="clearBackpack()" class="px-2 py-1 bg-rose-950/40 hover:bg-rose-900/60 active:bg-rose-950 text-[11px] font-medium text-rose-300 border border-rose-800/40 rounded transition-all cursor-pointer">
+                                🗑️ 清空
+                            </button>
+                        </div>
+                    </div>
+                    <div id="backpack-list" class="space-y-1.5 max-h-48 overflow-y-auto text-xs text-slate-300">
+                        <p class="text-center text-slate-500 py-4">背包目前空空如也，快去模擬採集吧！</p>
+                    </div>
+                    <div id="backpack-toast" class="mt-2 text-center text-xs text-amber-400 font-semibold opacity-0 transition-opacity duration-300"></div>
+                </div>
+
+            </div>
+
+            <div class="lg:col-span-7 space-y-4">
+                
+                <!-- 雙頁籤切換 -->
+                <div class="flex border-b border-slate-800 bg-slate-900/50 p-1 rounded-xl">
+                    <button id="tab-table" class="flex-1 py-2.5 text-sm font-bold rounded-lg text-amber-400 bg-slate-900/90 border border-slate-800 shadow transition-all duration-200 flex justify-center items-center gap-2 cursor-pointer">
+                        <span>📋</span> 資源對照表
+                    </button>
+                    <button id="tab-rules" class="flex-1 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:text-white transition-all duration-200 flex justify-center items-center gap-2 cursor-pointer">
+                        <span>📜</span> 規則說明書
+                    </button>
+                </div>
+
+                <!-- 頁面一：對照表格區 -->
+                <div id="page-table" class="space-y-4">
+                    
+                    <!-- 適用地貌過濾系統面板 (分拆獨立地貌，支援多選功能) -->
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 shadow-lg backdrop-blur-md space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-slate-800 pb-2 gap-2">
+                            <span class="text-xs font-bold text-slate-400 flex items-center gap-1.5">
+                                <span>🧭</span> 適用地貌過濾系統 (可多選，點擊按鈕即可進行聯集篩選)
+                            </span>
+                            <span id="filter-status" class="text-[11px] text-indigo-400 font-semibold bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-900/50">
+                                顯示全部 9 個地形
+                            </span>
+                        </div>
+                        
+                        <!-- 滾動型緊湊地貌按鈕盒 -->
+                        <div class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-1.5 bg-slate-950/50 rounded-lg border border-slate-850" id="terrain-filter-pills">
+                            <!-- 由 JS 動態繪製 22 個完全獨立的地貌按鈕（含全部地貌） -->
+                        </div>
+                    </div>
+
+                    <!-- 控制與搜尋列 -->
+                    <div class="bg-slate-900/80 p-4 rounded-xl border border-slate-800 shadow-lg flex flex-col sm:flex-row gap-4 items-center justify-between backdrop-blur-md">
+                        <!-- 搜尋功能 -->
+                        <div class="relative w-full sm:max-w-md">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-slate-450" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                            </div>
+                            <input type="text" id="search-input" placeholder="搜尋材料中文或英文... (如：藍切魚、燕雀石)" 
+                                   class="block w-full pl-10 pr-10 py-2 border border-slate-800 rounded-lg bg-slate-950 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all">
+                            <button id="clear-search" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-white hidden">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- 控制按鈕 -->
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button id="btn-expand-all" class="flex-1 sm:flex-initial px-4 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-lg text-sm font-medium transition-colors shadow-md cursor-pointer">
+                                全部展開
+                            </button>
+                            <button id="btn-collapse-all" class="flex-1 sm:flex-initial px-4 py-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-900 text-slate-200 rounded-lg text-sm font-medium transition-colors border border-slate-750 cursor-pointer">
+                                全部收合
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 採集表容器 -->
+                    <div id="accordion-container" class="space-y-4"></div>
+                </div>
+
+                <!-- 頁面二：規則說明頁 -->
+                <div id="page-rules" class="hidden space-y-6">
+                    <!-- 規則概覽 -->
+                    <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-800 shadow-xl space-y-4">
+                        <h2 class="text-xl font-bold text-amber-400 flex items-center gap-2 border-b border-slate-800 pb-3">
+                            <span>📜</span> 九大地形採集規則簡介
+                        </h2>
+                        <p class="text-sm text-slate-300 leading-relaxed">
+                            生物棲息於許多不同的環境和位置。在進行資源採集或進行野外生存時，DM 會根據團隊身處的地理位置決定冒險地形。
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                                <div class="text-indigo-400 font-bold text-sm mb-1">🌲 導航 (求生) DC</div>
+                                <p class="text-xs text-slate-400">用於在特定地形中尋求安全通道、開拓未知區域或在行軍過程避開環境災害。</p>
+                            </div>
+                            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                                <div class="text-indigo-400 font-bold text-sm mb-1">👁️ 遭遇 (觀察) DC</div>
+                                <p class="text-xs text-slate-400">當團隊在野外紮營、休息或 DM 判定有隨機事件的可能性時，用於警戒遭遇的被動或主動檢定。</p>
+                            </div>
+                            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800">
+                                <div class="text-indigo-400 font-bold text-sm mb-1">🍀 調查 (自然) DC</div>
+                                <p class="text-xs text-slate-400">偵察兵在狩獵或探險期間嘗試尋找資源（骨堆、植物等）時所需進行的挑戰難度。</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 獲取資源核心十步驟 -->
+                    <div class="bg-slate-900/80 p-6 rounded-2xl border border-slate-800 shadow-xl">
+                        <h3 class="text-lg font-bold text-slate-200 mb-4 flex items-center gap-2">
+                            <span>🎒</span> 資源採集核心流程
+                        </h3>
+                        <ol class="space-y-3.5 text-sm text-slate-300">
+                            <li class="flex gap-2"><span class="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-900 text-indigo-300 flex items-center justify-center font-bold text-xs">1</span> <div>DM 宣佈今日冒險適用的<b>「地貌環境」</b>。</div></li>
+                            <li class="flex gap-2"><span class="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-900 text-indigo-300 flex items-center justify-center font-bold text-xs">2</span> <div>玩家在適用地貌中<b>選擇一個特定的「九大地形」</b>。您可善用右上角的過濾器快速鎖定。</div></li>
+                            <li class="flex gap-2"><span class="flex-shrink-0 w-5 h-5 rounded-full bg-indigo-900 text-indigo-300 flex items-center justify-center font-bold text-xs">3</span> <div>玩家<b>選擇一項適用技能</b>（求生、觀察或自然）進行 D20 檢定。</div></li>
+                            <li class="flex gap-2"><span class="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-950 text-emerald-300 flex items-center justify-center font-bold text-xs">4</span> <div><b>檢定成功（&ge; 該技能 DC）</b>：獲得 1 次資源收獲機會。</div></li>
+                            <li class="flex gap-2"><span class="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-950 text-emerald-300 flex items-center justify-center font-bold text-xs">5</span> <div><b>檢定大成功（&ge; 20）</b>：成果豐碩，多獲得 1 次額外採集（共 2 次）。</div></li>
+                            <li class="flex gap-2"><span class="flex-shrink-0 w-5 h-5 rounded-full bg-amber-950 text-amber-300 flex items-center justify-center font-bold text-xs">6</span> <div><b>座標定位法</b>：先擲出 X 軸座標，再擲出 Y 軸座標（1d6），並至「等級對照表」對應收獲。</div></li>
+                            <li class="flex gap-2"><span class="flex-shrink-0 w-5 h-5 rounded-full bg-rose-950 text-rose-300 flex items-center justify-center font-bold text-xs">7</span> <div><b>檢定失敗</b>：將此表格<b>自動下修一階等級</b>，並改用<b>「備用技能」</b>進行挽救檢定！</div></li>
+                            <li class="flex gap-2"><span class="flex-shrink-0 w-5 h-5 rounded-full bg-rose-950 text-rose-300 flex items-center justify-center font-bold text-xs">8</span> <div><b>無限下修階梯機制</b>：若備用技能檢定再次失敗，表格會<b>繼續下修一階</b>，玩家可以再次對應其備用技能進行挑戰！</div></li>
+                            <li class="flex gap-2"><span class="flex-shrink-0 w-5 h-5 rounded-full bg-rose-950 text-rose-300 flex items-center justify-center font-bold text-xs">9</span> <div><b>極限下修命運事件</b>：若於最初階表的挽救檢定依然失敗，即宣告大失敗，正式開啟特殊命運與驚喜劇情轉折！</div></li>
+                        </ol>
+                    </div>
+
+                    <!-- 備用技能與工具對照 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-xl">
+                            <h4 class="font-bold text-slate-200 mb-3 flex items-center gap-1.5 text-sm">
+                                <span>🛠️</span> 必要採集工具
+                            </h4>
+                            <ul class="space-y-2 text-xs text-slate-400">
+                                <li class="flex justify-between p-2 bg-slate-950 rounded border border-slate-850"><span>🎣 釣用具 (Fishing Tackle)</span><span class="text-indigo-400">用於魚類</span></li>
+                                <li class="flex justify-between p-2 bg-slate-950 rounded border border-slate-850"><span>⛏️ 採礦鎬 (Miner's Pick)</span><span class="text-indigo-400">用於礦物</span></li>
+                                <li class="flex justify-between p-2 bg-slate-950 rounded border border-slate-850"><span>🕸️ 捕蟲網 (Bug Net)</span><span class="text-indigo-400">用於捕捉昆蟲</span></li>
+                                <li class="flex justify-between p-2 bg-slate-950 rounded border border-slate-850"><span>🌿 草藥工具包 (Herbalism Kit)</span><span class="text-indigo-400">用於採集植物(無工具則劣勢)</span></li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 shadow-xl">
+                            <h4 class="font-bold text-slate-200 mb-3 flex items-center gap-1.5 text-sm">
+                                <span>🎲</span> 失敗挽救備用技能對照表
+                            </h4>
+                            <ul class="space-y-1.5 text-xs text-slate-400">
+                                <li class="flex justify-between p-1.5 border-b border-slate-800"><span>🦴 骨堆 (Bonepiles)</span><span class="text-amber-500">歷史 (History) / 觀察 (Perception)</span></li>
+                                <li class="flex justify-between p-1.5 border-b border-slate-800"><span>🐟 魚類 (Fish)</span><span class="text-amber-500">運動 (Athletics) / 巧手 (Sleight of Hand)</span></li>
+                                <li class="flex justify-between p-1.5 border-b border-slate-800"><span>🪲 昆蟲 (Insects)</span><span class="text-amber-500">巧手 (Sleight of Hand) / 觀察 (Perception)</span></li>
+                                <li class="flex justify-between p-1.5 border-b border-slate-800"><span>💎 礦物 (Minerals)</span><span class="text-amber-500">力量 運動 (Athletics)</span></li>
+                                <li class="flex justify-between p-1.5 border-b border-slate-800"><span>🍄 菇類 (Mushrooms)</span><span class="text-amber-500">自然 (Nature) / 求生 (Survival)</span></li>
+                                <li class="flex justify-between p-1.5"><span>🌱 植物 (Plants)</span><span class="text-amber-500">自然 (Nature) / 求生 (Survival)</span></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- 成功採集彈出窗 -->
+    <div id="harvest-modal" class="fixed inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-50 hidden opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-900 border-2 border-amber-500/80 p-6 rounded-2xl max-w-sm w-full mx-4 shadow-2xl transform scale-90 transition-transform duration-300 text-center relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-b from-amber-500/5 via-transparent to-transparent pointer-events-none"></div>
+            
+            <div class="w-16 h-16 bg-amber-950/40 rounded-full border border-amber-500/30 mx-auto flex items-center justify-center text-3xl mb-4 shadow-inner">
+                ✨
+            </div>
+            
+            <h3 class="text-xs font-bold text-amber-500 uppercase tracking-widest mb-1">恭喜成功採集收穫！</h3>
+            <p id="modal-coordinate-title" class="text-[10px] text-slate-500 font-mono font-bold mb-3">X: - | Y: -</p>
+            
+            <div class="bg-slate-950/80 py-4 px-3 rounded-xl border border-slate-800 mb-4">
+                <p id="modal-item-name" class="text-lg font-bold text-slate-100 tracking-wide"></p>
+                <p id="modal-item-sub" class="text-xs text-slate-400 mt-1"></p>
+            </div>
+
+            <div class="text-[11px] text-slate-550 space-y-1 mb-6">
+                <p>冒險地形：<span id="modal-terrain" class="text-slate-300 font-medium"></span></p>
+                <p>套用等級：<span id="modal-level" class="text-slate-300 font-medium"></span></p>
+                <p>分類對照：<span id="modal-category" class="text-slate-300 font-medium"></span></p>
+            </div>
+
+            <div class="flex gap-2">
+                <button id="modal-btn-pack" class="flex-1 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer">
+                    放入採集包
+                </button>
+                <button id="modal-btn-close" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition-all cursor-pointer">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 備用技能徹底失敗彈出視窗（超顯眼大卡片設計 - 驚喜與特殊命運轉折） -->
+    <div id="failure-modal" class="fixed inset-0 flex items-center justify-center bg-black/85 backdrop-blur-md z-50 hidden opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-900 border-2 border-rose-500 p-6 rounded-2xl max-w-sm w-full mx-4 shadow-2xl shadow-rose-950/40 transform scale-90 transition-transform duration-300 text-center relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-b from-rose-500/5 via-transparent to-transparent pointer-events-none"></div>
+            
+            <div class="w-16 h-16 bg-rose-950/40 rounded-full border border-rose-500/30 mx-auto flex items-center justify-center text-3xl mb-4 shadow-inner animate-pulse">
+                💀
+            </div>
+            
+            <h3 class="text-xs font-bold text-rose-500 uppercase tracking-widest mb-1">備用挽救徹底失敗！</h3>
+            <p id="failure-modal-title" class="text-[10px] text-slate-500 font-mono font-bold mb-3">挑戰失敗 ➔ 命運驚喜事件觸發</p>
+            
+            <div class="bg-slate-950/80 py-4 px-3 rounded-xl border border-slate-800 mb-4">
+                <p id="failure-modal-result" class="text-lg font-bold text-slate-100 tracking-wide"></p>
+                <p id="failure-modal-sub" class="text-xs text-rose-400 mt-1 font-semibold"></p>
+            </div>
+
+            <div class="text-[11px] text-slate-400 space-y-2 mb-6 leading-relaxed text-left p-3 bg-slate-950/40 rounded-lg border border-slate-800/60">
+                <p class="flex items-start gap-1"><span>🧭</span> <span><b>冒險地形：</b><span id="failure-modal-terrain" class="text-slate-300"></span></span></p>
+                <p class="flex items-start gap-1"><span>⚠️</span> <span><b>命運審判：</b>您已耗盡所有等級表的下修機會（已達最初階），且備用技能挽救依然失敗！</span></p>
+                <p class="flex items-start gap-1"><span>🔮</span> <span><b>DM 特殊命運：</b>請立即向 DM 回報！您即將觸發隨機遭遇、工具報廢、重大環境災害或充滿驚喜的劇情轉折！</span></p>
+            </div>
+
+            <div class="flex gap-2">
+                <button id="failure-btn-close" class="w-full py-2 bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white rounded-lg text-xs font-bold transition-all shadow-md shadow-rose-950/50 cursor-pointer">
+                    接受命運 (關閉)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 地形與等級對照表
+        const terrainData = [
+            {
+                name: '先祖平原 (Ancestral Steppes)',
+                skills: { survival: 13, observation: 19, nature: 10 },
+                diceType: 'd6',
+                levels: [
+                    {
+                        playerLevel: '1-5',
+                        resources: {
+                            '骸骨 (Bonepile) DC 11': [
+                                '1: 骨頭 (Bone)',
+                                '2: 骨頭 (Bone)',
+                                '3: 小骨殼 (Sm Bone Husk)',
+                                '4: 鳥龍種的骨 (Bird Wyvern Bone)',
+                                '5: 大骨殼 (Lg Bone Husk)',
+                                '6: 獸骨 (Brute Bone)'
+                            ],
+                            '魚 (Fish) DC 12': [
+                                '1: 壽司魚 (Sushifish)',
+                                '2: 爆裂龍魚 (Burst Arowana)',
+                                '3: 爆彈龍魚 (Bomb Arowana)',
+                                '4: 爆裂龍魚 (Burst Arrowana)',
+                                '5: 鳳尾魚 (Wanchovy)',
+                                '6: 小金魚 (Small Goldenfish)'
+                            ],
+                            '昆蟲 (Insect) DC 10': [
+                                '1: 蟲之骸 (Insect Husk)',
+                                '2: 苦蟲 (Bitterbug)',
+                                '3: 蜂蜜 (Honey)',
+                                '4: 閃光蟲 (Flashbug)',
+                                '5: 蜘蛛網 (Spiderweb)',
+                                '6: 不死蟲 (Godbug)'
+                            ],
+                            '礦石 (Mining) DC 14': [
+                                '1: 石頭 (Stone)',
+                                '2: 鎧玉 (Armor Sphere)',
+                                '3: 鎧玉 (Armor Sphere)',
+                                '4: 大地結晶 (Earth Crystal)',
+                                '5: 大地結晶 (Earth Crystal)',
+                                '6: 上鎧玉 (Hard Armor Sphere)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 10': [
+                                '1: 藍蘑菇 (Blue Mushroom)',
+                                '2: 藍蘑菇 (Blue Mushroom)',
+                                '3: 藍蘑菇 (Blue Mushroom)',
+                                '4: 藍蘑菇 (Blue Mushroom)',
+                                '5: 藍蘑菇 (Blue Mushroom)',
+                                '6: 興奮蘑菇 (Exciteshroom)'
+                            ],
+                            '植物 (Plants) DC 10': [
+                                '1: 藥草 (Herb)',
+                                '2: 解毒草 (Antidote Herb)',
+                                '3: 常春藤葉 (Ivy)',
+                                '4: 黏著草 (Sap Plant)',
+                                '5: 木天蓼 (Felvine)',
+                                '6: 散彈果 (Scatternut)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '6-10',
+                        resources: {
+                            '骸骨 (Bonepile) DC 15': [
+                                '1: 大骨殼 (Lg Bone Husk)',
+                                '2: 小骨殼 (Sm Bone Husk)',
+                                '3: 獸骨 (Brute Bone)',
+                                '4: 魔物骨+ (Monster Bone+)',
+                                '5: 中魔物骨 (Med Monster Bone)',
+                                '6: 大魔物骨 (Lg Monster Bone)'
+                            ],
+                            '魚 (Fish) DC 14': [
+                                '1: 壽司魚 (Sushifish)',
+                                '2: 爆裂龍魚 (Burst Arrowana)',
+                                '3: 針鮪魚 (Pin Tuna)',
+                                '4: 爆裂龍魚 (Burst Arrowana)',
+                                '5: 鳳尾魚 (Wanchovy)',
+                                '6: 小金魚 (Small Goldenfish)'
+                            ],
+                            '昆蟲 (Insect) DC 13': [
+                                '1: 蜘蛛網 (Spiderweb)',
+                                '2: 蜂蜜 (Honey)',
+                                '3: 螢火蟲 (Firefly)',
+                                '4: 不死蟲 (Godbug)',
+                                '5: 雷光蟲 (Thunderbug)',
+                                '6: 閃光蟲 (Flashbug)'
+                            ],
+                            '礦石 (Mining) DC 16': [
+                                '1: 鎧玉 (Armor Sphere)',
+                                '2: 大地結晶 (Earth Crystal)',
+                                '3: 燕雀石 (Machalite Ore)',
+                                '4: 上鎧玉 (Hard Armor Sphere)',
+                                '5: 燕雀石 (Machalite Ore)',
+                                '6: 尖鎧玉 (Heavy Armor Sphere)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 13': [
+                                '1: 藍蘑菇 (Blue Mushroom)',
+                                '2: 藍蘑菇 (Blue Mushroom)',
+                                '3: 藍蘑菇 (Blue Mushroom)',
+                                '4: 藍蘑菇 (Blue Mushroom)',
+                                '5: 興奮蘑菇 (Exciteshroom)',
+                                '6: 興奮蘑菇 (Exciteshroom)'
+                            ],
+                            '植物 (Plants) DC 13': [
+                                '1: 散彈果 (Scatternut)',
+                                '2: 針果 (Needleberry)',
+                                '3: 解毒草 (Antidote Herb)',
+                                '4: 藥草 x2 (Herb x2)',
+                                '5: 常春藤葉 x2 (Ivy x2)',
+                                '6: 暮光草根 (Gloamgrass Root)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '11-16',
+                        resources: {
+                            '骸骨 (Bonepile) DC 17': [
+                                '1: 魔物骨+ (Monster Bone+)',
+                                '2: 魔物骨+ (Monster Bone+)',
+                                '3: 魔物硬骨 (Monster Toughbone)',
+                                '4: 大魔物骨 (Lg Monster Bone)',
+                                '5: 大魔物骨 (Lg Monster Bone)',
+                                '6: 古龍骨 (Elder Dragon Bone)'
+                            ],
+                            '魚 (Fish) DC 15': [
+                                '1: 爆裂龍魚 (Burst Arrowana)',
+                                '2: 爆彈龍魚 (Bomb Arrowana)',
+                                '3: 小金魚 (Small Goldenfish)',
+                                '4: 貪吃鮪魚 (Glutton Tuna)',
+                                '5: 古代魚 (Ancient Fish)',
+                                '6: 藍切魚 (Blue Cutthroat)'
+                            ],
+                            '昆蟲 (Insect) DC 15': [
+                                '1: 閃光蟲 (Flashbug)',
+                                '2: 閃光蟲 (Flashbug)',
+                                '3: 不死蟲 (Godbug)',
+                                '4: 雷光蟲 (Thunderbug)',
+                                '5: 不死蟲 x2 (Godbug x2)',
+                                '6: 花朵蟋蟀 (Blossom Cricket)'
+                            ],
+                            '礦石 (Mining) DC 20': [
+                                '1: 上鎧玉 (Hard Armor Sphere)',
+                                '2: 輝龍石 (Dragonite Ore)',
+                                '3: 輝龍石 (Dragonite Ore)',
+                                '4: 輝龍石 (Dragonite Ore)',
+                                '5: 靈鶴石 (Carbalite Ore)',
+                                '6: 靈鶴石 (Carbalite Ore)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 17': [
+                                '1: 藍蘑菇 (Blue Mushroom)',
+                                '2: 藍蘑菇 x2 (Blue Mushroom x2)',
+                                '3: 藍蘑菇 x3 (Blue Mushroom x3)',
+                                '4: 興奮蘑菇 (Exciteshroom)',
+                                '5: 興奮蘑菇 x2 (Exciteshroom x2)',
+                                '6: 興奮蘑菇 x3 (Exciteshroom x3)'
+                            ],
+                            '植物 (Plants) DC 17': [
+                                '1: 藥草 x3 (Herb x3)',
+                                '2: 怪力種子 (Might Seed)',
+                                '3: 忍耐種子 (Adamant Seed)',
+                                '4: 染色果 (Paintberry)',
+                                '5: 暮光草根 x2 (Gloamgrass Root x2)',
+                                '6: 怪力種子 (Might Seed)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '17-20',
+                        resources: {
+                            '骸骨 (Bonepile) DC 19': [
+                                '1: 小骨殼 x5 (Sm Bone Husk x5)',
+                                '2: 大魔物骨 (Lg Monster Bone)',
+                                '3: 魔物硬骨 (Monster Toughbone)',
+                                '4: 魔物硬骨 (Monster Toughbone)',
+                                '5: 魔物硬骨 (Monster Toughbone)',
+                                '6: 古龍骨 (Elder Dragonbone)'
+                            ],
+                            '魚 (Fish) DC 16': [
+                                '1: 貪吃鮪魚 (Glutton Tuna)',
+                                '2: 爆裂龍魚 (Burst Arrowana)',
+                                '3: 爆彈龍魚 (Bomb Arrowana)',
+                                '4: 古代魚 (Ancient Fish)',
+                                '5: 古代魚 (Ancient Fish)',
+                                '6: 美食家鮪魚 (Gastronome Tuna)'
+                            ],
+                            '昆蟲 (Insect) DC 18': [
+                                '1: 蜘蛛網 x3 (Spiderweb x3)',
+                                '2: 不死蟲 x2 (Godbug x2)',
+                                '3: 大毒蛛 (Large Toxic Kumori)',
+                                '4: 皇帝蝗蟲 (Emperor Locust)',
+                                '5: 蜂蜜 x5 (Honey x5)',
+                                '6: 幻蝶 (Phantom Butterfly)'
+                            ],
+                            '礦石 (Mining) DC 25': [
+                                '1: 輝龍石 (Dragonite Ore)',
+                                '2: 生命結晶 (Lifecrystals)',
+                                '3: 皇家鎧玉 (Royal Armor Sphere)',
+                                '4: 皇家鎧玉 (Royal Armor Sphere)',
+                                '5: 靈鶴石 (Carbalite Ore)',
+                                '6: 靈鶴石 (Carbalite Ore)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 20': [
+                                '1: 藍蘑菇 (Blue Mushroom)',
+                                '2: 興奮蘑菇 (Exciteshroom)',
+                                '3: 藍蘑菇 x3 (Blue Mushroom x3)',
+                                '4: 藍蘑菇 x4 (Blue Mushroom x4)',
+                                '5: 興奮蘑菇 x3 (Exciteshroom x3)',
+                                '6: 龍之托斯特菇 (Dragon Toadstool)'
+                            ],
+                            '植物 (Plants) DC 20': [
+                                '1: 空心果 x4 (Huskberry x4)',
+                                '2: 打消果實 (Nulberry)',
+                                '3: 忍耐種子 (Adamant Seed)',
+                                '4: 暮光草根 x2 (Gloamgrass Root x2)',
+                                '5: 打消果實 x2 (Nullberry x2)',
+                                '6: 星見花 (Stargazer Flower)'
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                name: '沙丘 (The Dunes)',
+                skills: { survival: 14, observation: 18, nature: 14 },
+                diceType: 'd10',
+                levels: [
+                    {
+                        playerLevel: '1-4',
+                        resources: {
+                            '骸骨 (Bonepile) DC 14': [
+                                '1: 骨頭 (Bone)',
+                                '2: 骨頭 (Bone)',
+                                '3: 小骨殼 (Sm Bone Husk)',
+                                '4: 大骨殼 (Lg Bone Husk)',
+                                '5: 小骨殼 (Sm Bone Husk)',
+                                '6: 小魔物骨 (Sm Monster Bone)'
+                            ],
+                            '魚 (Fish) DC 14': [
+                                '1: 壽司魚 (Sushifish)',
+                                '2: 砥石魚 (Whetfish)',
+                                '3: 砥石魚 (Whetfish)',
+                                '4: 砥石魚 (Whetfish)',
+                                '5: 針鮪魚 (Pin Tuna)',
+                                '6: 針鮪魚 (Pin Tuna)'
+                            ],
+                            '昆蟲 (Insect) DC 14': [
+                                '1: 蟲之骸 (Insect Husk)',
+                                '2: 蟲之骸 (Insect Husk)',
+                                '3: 蟋蟀 (Cricket)',
+                                '4: 螢火蟲 (Firefly)',
+                                '5: 蛇蜂幼蟲 (Snakebee Larva)',
+                                '6: 閃光蟲 (Flashbug)'
+                            ],
+                            '礦石 (Mining) DC 14': [
+                                '1: 石頭 (Stone)',
+                                '2: 大地結晶 (Earth Crystal)',
+                                '3: 大地結晶 (Earth Crystal)',
+                                '4: 鎧玉 (Armor Sphere)',
+                                '5: 鎧玉 (Armor Sphere)',
+                                '6: 燕雀石 (Machalite Ore)'
+                            ],
+                            '植物 (Plants) DC 10': [
+                                '1: 藥草 (Herb)',
+                                '2: 熱帶草莓 (Tropical Berry)',
+                                '3: 仙人掌花 (Cactus Flower)',
+                                '4: 仙人掌花 (Cactus Flower)',
+                                '5: 火藥草 (Fire Herb)',
+                                '6: 火藥草 (Fire Herb)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '5-10',
+                        resources: {
+                            '骸骨 (Bonepile) DC 16': [
+                                '1: 小骨殼 (Sm Bone Husk)',
+                                '2: 魔物骨+ (Monster Bone+)',
+                                '3: 中魔物骨 (Med Monster Bone)',
+                                '4: 魔物骨+ (Monster Bone+)',
+                                '5: 中魔物骨 (Med Monster Bone)',
+                                '6: 魔物硬骨 (Monster Toughbone)'
+                            ],
+                            '魚 (Fish) DC 16': [
+                                '1: 爆裂龍魚 (Burst Arrowana)',
+                                '2: 壽司魚 (Sushifish)',
+                                '3: POP魚 (Popfish)',
+                                '4: 針鮪魚 (Pin Tuna)',
+                                '5: 藍切魚 (Blue Cutthroat)',
+                                '6: 鳳尾魚 (Wanchovy)'
+                            ],
+                            '昆蟲 (Insect) DC 16': [
+                                '1: 蟲之骸 (Insect Husk)',
+                                '2: 雷光蟲 (Thunderbug)',
+                                '3: 雷光蟲 (Thunderbug)',
+                                '4: 閃光蟲 (Flashbug)',
+                                '5: 苦蟲 (Bitterbug)',
+                                '6: 不死蟲 (Godbug)'
+                            ],
+                            '礦石 (Mining) DC 16': [
+                                '1: 上鎧玉 (Hard Armor Sphere)',
+                                '2: 上鎧玉 (Hard Armor Sphere)',
+                                '3: 上鎧玉 (Hard Armor Sphere)',
+                                '4: 燕雀石 (Machalite Ore)',
+                                '5: 燕雀石 (Machalite Ore)',
+                                '6: 燕雀石 (Machalite Ore)'
+                            ],
+                            '植物 (Plants) DC 16': [
+                                '1: 火藥草 (Fire Herb)',
+                                '2: 火藥草 (Fire Herb)',
+                                '3: 熱帶草莓 (Tropical Berry)',
+                                '4: 仙人掌花 (Cactus Flower)',
+                                '5: 辣椒 (Hot Pepper)',
+                                '6: 辣椒 (Hot Pepper)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '11-16',
+                        resources: {
+                            '骸骨 (Bonepile) DC 18': [
+                                '1: 小骨殼 (Sm Bone Husk)',
+                                '2: 大骨殼 (Lg Bone Husk)',
+                                '3: 獸骨 (Brute Bone)',
+                                '4: 魔物骨+ (Monster Bone+)',
+                                '5: 大魔物骨 (Lg Monster Bone)',
+                                '6: 魔物硬骨 (Monster Toughbone)'
+                            ],
+                            '魚 (Fish) DC 18': [
+                                '1: 針鮪魚 (Pin Tuna)',
+                                '2: 爆裂龍魚 (Burst Arrowana)',
+                                '3: 眠魚 (Sleepyfish)',
+                                '4: 貪吃鮪魚 (Glutton Tuna)',
+                                '5: 砥石魚 (Whetfish)',
+                                '6: 旗魚 (Speartuna)'
+                            ],
+                            '昆蟲 (Insect) DC 18': [
+                                '1: 蟲之骸 (Insect Husk)',
+                                '2: 雷光蟲 (Thunderbug)',
+                                '3: 蜂蜜 (Honey)',
+                                '4: 毒蛛 (Toxic Kumori)',
+                                '5: 大角蜂 (Great Hornfly)',
+                                '6: 大毒蛛 (Large Toxic Kumori)'
+                            ],
+                            '礦石 (Mining) DC 18': [
+                                '1: 燕雀石 (Machalite Ore)',
+                                '2: 燕雀石 (Machalite Ore)',
+                                '3: 燕雀石 (Machalite Ore)',
+                                '4: 輝龍石 (Dragonite Ore)',
+                                '5: 鎧玉 (Armor Sphere)',
+                                '6: 輝龍石 (Dragonite Ore)'
+                            ],
+                            '植物 (Plants) DC 18': [
+                                '1: 藥草 (Herb)',
+                                '2: 染色果 (Paintberry)',
+                                '3: 熱帶草莓 (Tropical Berry)',
+                                '4: 仙人掌花 (Cactus Flower)',
+                                '5: 火藥草 (Fire Herb)',
+                                '6: 怪力種子 (Might Seed)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '17-20',
+                        resources: {
+                            '骸骨 (Bonepile) DC 20': [
+                                '1: 小骨殼 (Sm Bone Husk)',
+                                '2: 大魔物骨 (Lg Monster Bone)',
+                                '3: 大魔物骨 (Lg Monster Bone)',
+                                '4: 魔物硬骨 (Monster Toughbone)',
+                                '5: 魔物硬骨 (Monster Toughbone)',
+                                '6: 古龍骨 (Elder Dragonbone)'
+                            ],
+                            '魚 (Fish) DC 20': [
+                                '1: 針鮪魚 (Pin Tuna)',
+                                '2: 爆裂龍魚 (Burst Arrowana)',
+                                '3: 小金魚 (Small Goldenfish)',
+                                '4: 古代魚 (Ancient Fish)',
+                                '5: 古代魚 (Ancient Fish)',
+                                '6: 美食家鮪魚 (Gastronome Tuna)'
+                            ],
+                            '昆蟲 (Insect) DC 20': [
+                                '1: 不死蟲 (Godbug)',
+                                '2: 不死蟲 (Godbug)',
+                                '3: 閃光蟲 (Flashbug)',
+                                '4: 大角蜂 (Great Hornfly)',
+                                '5: 王族聖甲蟲 (King Scarab)',
+                                '6: 王族聖甲蟲 (King Scarab)'
+                            ],
+                            '礦石 (Mining) DC 20': [
+                                '1: 重鎧玉 (Heavy Armor Sphere)',
+                                '2: 輝龍石 (Dragonite Ore)',
+                                '3: 重鎧玉 (Heavy Armor Sphere)',
+                                '4: 輝龍石 (Dragonite Ore)',
+                                '5: 靈鶴石 (Carbalite Ore)',
+                                '6: 靈鶴石 (Carbalite Ore)'
+                            ],
+                            '植物 (Plants) DC 20': [
+                                '1: 辣椒 (Hot Pepper)',
+                                '2: 染色果 (Paintberry)',
+                                '3: 熱帶草莓 (Tropical Berry)',
+                                '4: 熱帶草莓 (Tropical Berry)',
+                                '5: 怪力種子 (Might Seed)',
+                                '6: 怪力種子 (Might Seed)'
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                name: '巨人密林 (Giant Jungle)',
+                skills: { survival: 14, observation: 18, nature: 12 },
+                diceType: 'd6',
+                levels: [
+                    {
+                        playerLevel: '1-4',
+                        resources: {
+                            '骸骨 (Bonepile) DC 14': [
+                                '1: 骨頭 (Bone)',
+                                '2: 大骨殼 (Lg Bone Husk)',
+                                '3: 小骨殼 (Sm Bone Husk)',
+                                '4: 鳥龍種的骨 (Bird Wyvern bone)',
+                                '5: 小骨殼 (Sm Bone Husk)',
+                                '6: 巨大骨 (Jumbo Bone)'
+                            ],
+                            '魚 (Fish) DC 10': [
+                                '1: 針鮪魚 (Pin Tuna)',
+                                '2: 砥石魚 (Whetfish)',
+                                '3: 爆彈龍魚 (Bomb Arowana)',
+                                '4: 爆裂龍魚 (Burst Arrowana)',
+                                '5: 針鮪魚 (Pin Tuna)',
+                                '6: 小金魚 (Small Goldenfish)'
+                            ],
+                            '昆蟲 (Insect) DC 10': [
+                                '1: 蟲之骸 (Insect Husk)',
+                                '2: 螢火蟲 (firefly)',
+                                '3: 獨角仙 (Carpenterbug)',
+                                '4: 蛇蜂幼蟲 (Snakebee Larva)',
+                                '5: 蜘蛛網 (Spiderweb)',
+                                '6: 苦蟲 (Bitterbug)'
+                            ],
+                            '礦石 (Mining) DC 14': [
+                                '1: 石頭 (Stone)',
+                                '2: 石頭 (Stone)',
+                                '3: 大地結晶 (Earth Crystal)',
+                                '4: 大地結晶 (Earth Crystal)',
+                                '5: 大地結晶 (Earth Crystal)',
+                                '6: 上鎧玉 (Hard Armor Sphere)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 10': [
+                                '1: 爆炸菇 (Nitroshroom)',
+                                '2: 藍蘑菇 (Blue Mushroom)',
+                                '3: 爆炸菇 (Nitroshroom)',
+                                '4: 爆炸菇 (Nitroshroom)',
+                                '5: 爆炸菇 (Nitroshroom)',
+                                '6: 藍蘑菇 (Blue Mushroom)'
+                            ],
+                            '植物 (Plants) DC 12': [
+                                '1: 藥草 (Herb)',
+                                '2: 染色果 (Paintberry)',
+                                '3: 火藥草 (Fire Herb)',
+                                '4: 常春藤葉 (Ivy)',
+                                '5: 針果 (Needleberry)',
+                                '6: 龍之種子 (Dragonseed)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '5-10',
+                        resources: {
+                            '骸骨 (Bonepile) DC 16': [
+                                '1: 大骨殼 (Lg Bone Husk)',
+                                '2: 小骨殼 (Sm Bone Husk)',
+                                '3: 獸骨 (Brute Bone)',
+                                '4: 中魔物骨 (Med Monster Bone)',
+                                '5: 中魔物骨 (Med Monster Bone)',
+                                '6: 魔物硬骨 (Monster Toughbone)'
+                            ],
+                            '魚 (Fish) DC 12': [
+                                '1: 眠魚 (Sleepyfish)',
+                                '2: 爆裂龍魚 (Burst Arrowana)',
+                                '3: POP魚 (Popfish)',
+                                '4: 爆裂龍魚 (Burst Arrowana)',
+                                '5: 鳳尾魚 (Wanchovy)',
+                                '6: 貪吃鮪魚 (Glutton Tuna)'
+                            ],
+                            '昆蟲 (Insect) DC 12': [
+                                '1: 蜂蜜 (Honey)',
+                                '2: 苦蟲 (Bitterbug)',
+                                '3: 雷光蟲 (Thunderbug)',
+                                '4: 苦蟲 (Bitterbug)',
+                                '5: 不死蟲 (Godbug)',
+                                '6: 閃光蟲 (Flashbug)'
+                            ],
+                            '礦石 (Mining) DC 16': [
+                                '1: 大地結晶 (Earth Crystal)',
+                                '2: 大地結晶 (Earth Crystal)',
+                                '3: 燕雀石 (Machalite Ore)',
+                                '4: 燕雀石 (Machalite Ore)',
+                                '5: 燕雀石 (Machalite Ore)',
+                                '6: 重鎧玉 (Heavy Armor Sphere)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 12': [
+                                '1: 爆炸菇 (Nitroshroom)',
+                                '2: 爆炸菇 (Nitroshroom)',
+                                '3: 藍蘑菇 (Blue Mushroom)',
+                                '4: 藍蘑菇 (Blue Mushroom)',
+                                '5: 興奮蘑菇 (Exciteshroom)',
+                                '6: 興奮蘑菇 (Exciteshroom)'
+                            ],
+                            '植物 (Plants) DC 14': [
+                                '1: 打消果實 (Nullberry)',
+                                '2: 針果 (Needleberry)',
+                                '3: 解毒草 (Antidote Herb)',
+                                '4: 辣椒 (Hot Pepper)',
+                                '5: 熱帶草莓 (Tropical Berry)',
+                                '6: 忍耐種子 (Adamant Seed)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '11-16',
+                        resources: {
+                            '骸骨 (Bonepile) DC 18': [
+                                '1: 小骨殼 x3 (Sm BoneHusk x3)',
+                                '2: 中魔物骨 (Med Monster Bone)',
+                                '3: 大魔物骨 (Lg Monster Bone)',
+                                '4: 大魔物骨 (Lg Monster Bone)',
+                                '5: 大魔物骨 (Lg Monster Bone)',
+                                '6: 古龍骨 (Elder Dragon Bone)'
+                            ],
+                            '魚 (Fish) DC 15': [
+                                '1: POP魚 (Popfish)',
+                                '2: 鳳尾魚 (Wanchovy)',
+                                '3: 小金魚 (Small Goldenfish)',
+                                '4: 貪吃鮪魚 (Glutton Tuna)',
+                                '5: 古代魚 (Ancient Fish)',
+                                '6: 古代魚 (Ancient Fish)'
+                            ],
+                            '昆蟲 (Insect) DC 15': [
+                                '1: 蟲之骸 (Insect Husk)',
+                                '2: 閃光蟲 x2 (Flashbug x2)',
+                                '3: 大毒蛛 (Large Toxic Kumori)',
+                                '4: 不死蟲 x2 (Godbug x2)',
+                                '5: 不死蟲 x3 (Godbug x3)',
+                                '6: 苦蟲 x3 (Bitterbug x3)'
+                            ],
+                            '礦石 (Mining) DC 19': [
+                                '1: 重鎧玉 (Heavy Armor Sphere)',
+                                '2: 輝龍石 (Dragonite Ore)',
+                                '3: 輝龍石 (Dragonite Ore)',
+                                '4: 輝龍石 (Dragonite Ore)',
+                                '5: 靈鶴石 (Carbalite Ore)',
+                                '6: 靈鶴石 (Carbalite Ore)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 15': [
+                                '1: 藍蘑菇 (Blue Mushroom)',
+                                '2: 藍蘑菇 x2 (Blue Mushroom x2)',
+                                '3: 爆炸菇 (Nitroshroom)',
+                                '4: 爆炸菇 x3 (Nitroshroom x3)',
+                                '5: 興奮蘑菇 (Exciteshroom x2)',
+                                '6: 興奮蘑菇 x3 (Exciteshroom x3)'
+                            ],
+                            '植物 (Plants) DC 17': [
+                                '1: 常春藤葉 x2 (Ivy x2)',
+                                '2: 黏著草 x2 (Sap Plant x2)',
+                                '3: 忍耐種子 (Adamant Seed)',
+                                '4: 熱帶草莓 (Tropical Berry)',
+                                '5: 辣椒 x2 (Hot Pepper x2)',
+                                '6: 雙蓋紅花 (Dosbiscus)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '17-20',
+                        resources: {
+                            '骸骨 (Bonepile) DC 21': [
+                                '1: 大骨殼 x5 (Lg Bone Husk x5)',
+                                '2: 魔物硬骨 (Monster Toughbone)',
+                                '3: 大魔物骨 (Lg Monster Bone)',
+                                '4: 大魔物骨 (Lg Monster Bone)',
+                                '5: 大魔物骨 (Lg Monster Bone)',
+                                '6: 古龍骨 (Elder Dragonbone)'
+                            ],
+                            '魚 (Fish) DC 18': [
+                                '1: 貪吃鮪魚 (Glutton Tuna)',
+                                '2: 小金魚 (Small Goldenfish)',
+                                '3: 旗魚 (Speartuna)',
+                                '4: 古代魚 (Ancient Fish)',
+                                '5: 古代魚 (Ancient Fish)',
+                                '6: 美食家鮪魚 (Gastronome Tuna)'
+                            ],
+                            '昆蟲 (Insect) DC 18': [
+                                '1: 蜘蛛網 x3 (Spiderweb x3)',
+                                '2: 大毒蛛 (Large Toxic Kumori)',
+                                '3: 蜂蜜 x4 (Honey x4)',
+                                '4: 皇帝蝗蟲 (Emperor Locust)',
+                                '5: 蜂蜜 x5 (Honey x5)',
+                                '6: 王族聖甲蟲 (King Scarab)'
+                            ],
+                            '礦石 (Mining) DC 23': [
+                                '1: 輝龍石 (Dragonite Ore)',
+                                '2: 生命結晶 x2 (Lifecrystals x2)',
+                                '3: 皇家鎧玉 (Royal Armor Sphere)',
+                                '4: 靈鶴石 (Carbalite Ore)',
+                                '5: 靈鶴石 (Carbalite Ore)',
+                                '6: 靈鶴石 (Carbalite Ore)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 18': [
+                                '1: 藍蘑菇 (Blue Mushroom)',
+                                '2: 興奮蘑菇 (Exciteshroom)',
+                                '3: 藍蘑菇 x3 (Blue Mushroom x3)',
+                                '4: 爆炸菇 x4 (Nitroshroom x4)',
+                                '5: 興奮蘑菇 x3 (Exciteshroom x3)',
+                                '6: 龍之托斯特菇 (Dragon Toadstool)'
+                            ],
+                            '植物 (Plants) DC 20': [
+                                '1: 常春藤葉 x4 (Ivy x4)',
+                                '2: 打消果實 x2 (Nulberry x2)',
+                                '3: 忍耐種子 (Adamant Seed)',
+                                '4: 辣椒 x2 (Hot Pepper x2)',
+                                '5: 怪力種子 (Might Seed)',
+                                '6: 雙蓋紅花 (Dosbiscus)'
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                name: '開闊海域 (Ocean)',
+                skills: { survival: 15, observation: 17, nature: 13 },
+                diceType: 'd10',
+                levels: [
+                    {
+                        playerLevel: '1-5',
+                        resources: {
+                            '骸骨 (Bonepile) DC 13': [
+                                '1: 骨頭 (Bone)',
+                                '2: 骨頭 (Bone)',
+                                '3: 大骨殼 (Lg Bone Husk)',
+                                '4: 小魔物骨 (Sm Monster Bone)',
+                                '5: 小骨殼 (Sm Bone Husk)',
+                                '6: 小魔物骨 (Sm Monster Bone)'
+                            ],
+                            '魚 (Fish) DC 10': [
+                                '1: POP魚 (Popfish)',
+                                '2: 眠魚 (Sleepyfish)',
+                                '3: 爆彈龍魚 (Bomb Arowana)',
+                                '4: 爆裂龍魚 (Burst Arrowana)',
+                                '5: 砥石魚 (Whetfish)',
+                                '6: 針鮪魚 (Pin Tuna)'
+                            ],
+                            '昆蟲 (Insect) DC 11': [
+                                '1: 蟲之骸 (Insect Husk)',
+                                '2: 蠕蟲 (Worm)',
+                                '3: 蟲之骸 (Insect Husk)',
+                                '4: 螢火蟲 (Firefly)',
+                                '5: 蜘蛛網 (Spiderweb)',
+                                '6: 不死蟲 (Godbug)'
+                            ],
+                            '礦石 (Mining) DC 14': [
+                                '1: 石頭 (Stone)',
+                                '2: 石頭 (Stone)',
+                                '3: 冰結晶 (Ice Crystal)',
+                                '4: 大地結晶 (Earth Crystal)',
+                                '5: 鎧玉 (Armor Sphere)',
+                                '6: 燕雀石 (Machalite Ore)'
+                            ],
+                            '植物 (Plants) DC 11': [
+                                '1: 空氣草 (Airweed)',
+                                '2: 藥草 (Herb)',
+                                '3: 散彈果 (Scatternut)',
+                                '4: 爆裂果實 (Bomberry)',
+                                '5: 木天蓼 (Felvine)',
+                                '6: 空氣草 (Airweed)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '6-10',
+                        resources: {
+                            '骸骨 (Bonepile) DC 16': [
+                                '1: 大骨殼 (Lg Bone Husk)',
+                                '2: 小骨殼 (Sm Bone Husk)',
+                                '3: 獸骨 (Brute Bone)',
+                                '4: 魔物骨+ (Monster Bone+)',
+                                '5: 魔物硬骨 (Monster Toughbone)',
+                                '6: 大魔物骨 (Lg Monster Bone)'
+                            ],
+                            '魚 (Fish) DC 14': [
+                                '1: 針鮪魚 (Pin Tuna)',
+                                '2: 爆裂龍魚 (Burst Arrowana)',
+                                '3: 鳳尾魚 (Wanchovy)',
+                                '4: 爆裂龍魚 (Burst Arrowana)',
+                                '5: 藍切魚 (Blue Cutthroat)',
+                                '6: 貪吃鮪魚 (Glutton Tuna)'
+                            ],
+                            '昆蟲 (Insect) DC 14': [
+                                '1: 蜘蛛網 x2 (Spiderweb x2)',
+                                '2: 蜂蜜 x2 (Honey x2)',
+                                '3: 不死蟲 (Godbug)',
+                                '4: 雷光蟲 (Thunderbug)',
+                                '5: 花朵蟋蟀 (Blossom Cricket)',
+                                '6: 皇帝蝗蟲 (Emperor Locust)'
+                            ],
+                            '礦石 (Mining) DC 17': [
+                                '1: 上鎧玉 (Hard Armor Sphere)',
+                                '2: 燕雀石 (Machalite Ore)',
+                                '3: 生命結晶 (Lifecrystals)',
+                                '4: 生命結晶 (Lifecrystals)',
+                                '5: 輝龍石 (Dragonite Ore)',
+                                '6: 尖鎧玉 (Heavy Armor Sphere)'
+                            ],
+                            '植物 (Plants) DC 14': [
+                                '1: 空氣草 x2 (Airweed x2)',
+                                '2: 打消果實 (Nullberry)',
+                                '3: 熱帶草莓 (Tropical Berry)',
+                                '4: 熱帶草莓 (Tropical Berry)',
+                                '5: 忍耐種子 (Adamant Seed)',
+                                '6: 空氣草 x3 (Airweed x3)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '11-20',
+                        resources: {
+                            '骸骨 (Bonepile) DC 21': [
+                                '1: 中魔物骨 (Med Monster Bone)',
+                                '2: 大魔物骨 (Lg Monster Bone)',
+                                '3: 魔物硬骨 (Monster Toughbone)',
+                                '4: 大魔物骨 (Lg Monster Bone)',
+                                '5: 古龍骨 (Elder Dragon Bone)',
+                                '6: 古龍骨 (Elder Dragon Bone)'
+                            ],
+                            '魚 (Fish) DC 20': [
+                                '1: 小金魚 (Small Goldenfish)',
+                                '2: 貪吃鮪魚 (Glutton Tuna)',
+                                '3: 藍切魚 (Blue Cutthroat)',
+                                '4: 貪吃鮪魚 (Glutton Tuna)',
+                                '5: 古代魚 (Ancient Fish)',
+                                '6: 美食家鮪魚 (Gastronome Tuna)'
+                            ],
+                            '昆蟲 (Insect) DC 19': [
+                                '1: 蜂蜜 x3 (Honey x3)',
+                                '2: 閃光蟲 x2 (Flashbug x2)',
+                                '3: 雷光蟲 (Thunderbug)',
+                                '4: 不死蟲 (Godbug)',
+                                '5: 花朵蟋蟀 (Blossom Cricket)',
+                                '6: 幻蝶 (Phantom Butterfly)'
+                            ],
+                            '礦石 (Mining) DC 22': [
+                                '1: 上鎧玉 (Hard Armor Sphere)',
+                                '2: 生命結晶 (Lifecrystals)',
+                                '3: 輝龍石 (Dragonite Ore)',
+                                '4: 靈鶴石 (Carbalite Ore)',
+                                '5: 靈鶴石 (Carbalite Ore)',
+                                '6: 皇家鎧玉 (Royal Armor Sphere)'
+                            ],
+                            '植物 (Plants) DC 19': [
+                                '1: 空氣草 x4 (Airweed x4)',
+                                '2: 藥草 x4 (Herb x4)',
+                                '3: 熱帶草莓 x3 (Tropical Berry x3)',
+                                '4: 忍耐種子 x2 (Adamant Seed x2)',
+                                '5: 怪力種子 x2 (Might Seed x2)',
+                                '6: 星見花 (Stargazer Flower)'
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                name: '腐朽山谷 (Rotten Vale)',
+                skills: { survival: 15, observation: 17, nature: 14 },
+                diceType: 'd6',
+                levels: [
+                    {
+                        playerLevel: '1-4',
+                        resources: {
+                            '骸骨堆 (Bonepile) DC 10': [
+                                '1: 骨頭 x2 (Bone x2)',
+                                '2: 大骨殼 x2 (Lg Bone Husk x2)',
+                                '3: 小骨殼 x2 (Sm Bone Husk x2)',
+                                '4: 鳥龍種的骨 x2 (Bird Wyvern bone x2)',
+                                '5: 小骨殼 x2 (Sm Bone Husk x2)',
+                                '6: 巨大骨 x2 (Jumbo Bone x2)'
+                            ],
+                            '魚 (Fish) DC 14': [
+                                '1: 砥石魚 (Whet Fish)',
+                                '2: 壽司魚 (Sushifish)',
+                                '3: 砥石魚 (Whet Fish)',
+                                '4: 壽司魚 (Sushi Fish)',
+                                '5: 針鮪魚 (Pin Tuna)',
+                                '6: 小金魚 (Small Goldenfish)'
+                            ],
+                            '昆蟲 (Insect) DC 12': [
+                                '1: 蟲之骸 (Insect Husk)',
+                                '2: 蜘蛛網 (Spiderweb)',
+                                '3: 獨角仙 (Carpenterbug)',
+                                '4: 蜂蜜 (Honey)',
+                                '5: 蜘蛛網 (Spiderweb)',
+                                '6: 苦蟲 (Bitterbug)'
+                            ],
+                            '礦物 (Mining) DC 13': [
+                                '1: 石頭 (Stone)',
+                                '2: 石頭 (Stone)',
+                                '3: 鎧玉 (Armor Sphere)',
+                                '4: 大地結晶 (Earth Crystal)',
+                                '5: 鎧玉 (Armor Sphere)',
+                                '6: 大地結晶 (Earth Crystal)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 10': [
+                                '1: 爆炸菇 (Nitroshroom)',
+                                '2: 藍蘑菇 (Blue Mushroom)',
+                                '3: 毒菇 (Toadstool)',
+                                '4: 毒菇 (Toadstool)',
+                                '5: 毒菇 (Toadstool)',
+                                '6: 麻痺蘑菇 (Parashroom)'
+                            ],
+                            '植物 (Plants) DC 12': [
+                                '1: 藥草 (Herb)',
+                                '2: 爆裂果實 (Bomberry)',
+                                '3: 常春藤葉 (Ivy)',
+                                '4: 龍之種子 (Dragon Seed)',
+                                '5: 針果 (Needleberry)',
+                                '6: 打消果實 (Nullberry)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '5-10',
+                        resources: {
+                            '骸骨堆 (Bonepile) DC 12': [
+                                '1: 大骨殼 x2 (Lg Bone Husk x2)',
+                                '2: 小骨殼 x2 (Sm Bone Husk x2)',
+                                '3: 魔物骨+ x2 (Monster Bone+ x2)',
+                                '4: 獸骨 x2 (Brute Bone x2)',
+                                '5: 魔物骨+ x2 (Monster Bone+ x2)',
+                                '6: 大魔物骨 x2 (Lg Monster Bone x2)'
+                            ],
+                            '魚 (Fish) DC 16': [
+                                '1: 壽司魚 (Sushifish)',
+                                '2: 壽司魚 (Sushifish)',
+                                '3: 針鮪魚 (Pin Tuna)',
+                                '4: POP魚 (Popfish)',
+                                '5: 鳳尾魚 (Wanchovy)',
+                                '6: 鳳尾魚 (Wanchovy)'
+                            ],
+                            '昆蟲 (Insect) DC 14': [
+                                '1: 蜂蜜 (Honey)',
+                                '2: 苦蟲 (Bitterbug)',
+                                '3: 蜘蛛網 (Spiderweb)',
+                                '4: 閃光蟲 (Flashbug)',
+                                '5: 不死蟲 (Godbug)',
+                                '6: 不死蟲 (Godbug)'
+                            ],
+                            '礦物 (Mining) DC 15': [
+                                '1: 大地結晶 (Earth Crystal)',
+                                '2: 鎧玉 (Armor Sphere)',
+                                '3: 燕雀石 (Machalite Ore)',
+                                '4: 上鎧玉 (Hard Armor Sphere)',
+                                '5: 燕雀石 (Machalite Ore)',
+                                '6: 上鎧玉 (Hard Armor Sphere)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 12': [
+                                '1: 毒菇 (Toadstool)',
+                                '2: 毒菇 (Toadstool)',
+                                '3: 毒菇 (Toadstool)',
+                                '4: 麻痺蘑菇 (Parashroom)',
+                                '5: 藍蘑菇 (Blue Mushroom)',
+                                '6: 麻痺蘑菇 (Parashroom)'
+                            ],
+                            '植物 (Plants) DC 14': [
+                                '1: 龍之種子 (Dragon Seed)',
+                                '2: 木天蓼 (Felvine)',
+                                '3: 黏著草 (Sap Plant)',
+                                '4: 散彈果 (Scatternut)',
+                                '5: 常春藤葉 (Ivy)',
+                                '6: 藥草 x2 (Herb x2)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '11-16',
+                        resources: {
+                            '骸骨堆 (Bonepile) DC 15': [
+                                '1: 小骨殼 x3 (Sm BoneHusk x3)',
+                                '2: 魔物硬骨 x2 (Monster Toughbone x2)',
+                                '3: 魔物硬骨 x2 (Monster Toughbone x2)',
+                                '4: 大魔物骨 x2 (Lg Monster Bone x2)',
+                                '5: 大魔物骨 x2 (Lg Monster Bone x2)',
+                                '6: 古龍骨 x2 (Elder Dragon Bone x2)'
+                            ],
+                            '魚 (Fish) DC 19': [
+                                '1: 壽司魚 x4 (Sushifish x4)',
+                                '2: 鳳尾魚 (Wanchovy)',
+                                '3: 小金魚 (Small Goldenfish)',
+                                '4: 貪吃鮪魚 (Glutton Tuna)',
+                                '5: 旗魚 (Spear Tuna)',
+                                '6: 古代魚 (Ancient Fish)'
+                            ],
+                            '昆蟲 (Insect) DC 17': [
+                                '1: 蜘蛛網 x3 (Spiderweb x3)',
+                                '2: 苦蟲 x3 (Bitterbug x3)',
+                                '3: 皇帝蝗蟲 (Emperor Locust)',
+                                '4: 毒蛛 (Toxic Kurori)',
+                                '5: 不死蟲 x2 (Godbug x2)',
+                                '6: 不死蟲 x3 (Godbug x3)'
+                            ],
+                            '礦物 (Mining) DC 18': [
+                                '1: 光水晶 (Lightcrystal)',
+                                '2: 重鎧玉 (Heavy Armor Sphere)',
+                                '3: 輝龍石 (Dragonite Ore)',
+                                '4: 重鎧玉 (Heavy Armor Sphere)',
+                                '5: 輝龍石 (Dragonite Ore)',
+                                '6: 靈鶴石 (Carbalite Ore)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 15': [
+                                '1: 毒菇 (Toadstool)',
+                                '2: 藍蘑菇 x2 (Blue Mushroom x2)',
+                                '3: 毒菇 x2 (Toadstool x2)',
+                                '4: 麻痺蘑菇 x3 (Parashroom x3)',
+                                '5: 龍之托斯特菇 x2 (Dragon Toadstool x2)',
+                                '6: 混沌真菌 (Chaos Mushroom)'
+                            ],
+                            '植物 (Plants) DC 17': [
+                                '1: 常春藤葉 x2 (Ivy x2)',
+                                '2: 龍之種子 x2 (Dragon Seed x2)',
+                                '3: 忍耐種子 (Adamant Seed)',
+                                '4: 怪力種子 (Might Seed)',
+                                '5: 暮光草根 x2 (Gloamgrass Root x2)',
+                                '6: 雙蓋紅花 (Dosbiscus)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '17-20',
+                        resources: {
+                            '骸骨堆 (Bonepile) DC 18': [
+                                '1: 大骨殼 x5 (Lg Bone Husk x5)',
+                                '2: 魔物硬骨 x2 (Monster Toughbone x2)',
+                                '3: 大魔物骨 x2 (Lg Monster Bone x2)',
+                                '4: 大魔物骨 x2 (Lg Monster Bone x2)',
+                                '5: 魔物硬骨 x2 (Monster Toughbone x2)',
+                                '6: 古龍骨 x2 (Elder Dragon Bone x2)'
+                            ],
+                            '魚 (Fish) DC 22': [
+                                '1: 壽司魚 x5 (Sushi Fish x5)',
+                                '2: 貪吃鮪魚 (Glutton Tuna)',
+                                '3: 古代魚 (Ancient Fish)',
+                                '4: 旗魚 (Speartuna)',
+                                '5: 旗魚 (Speartuna)',
+                                '6: 美食家鮪魚 (Gastronome Tuna)'
+                            ],
+                            '昆蟲 (Insect) DC 20': [
+                                '1: 毒蛛 (Toxic Kumori)',
+                                '2: 蜘蛛網 x4 (Spider Web x4)',
+                                '3: 蜂蜜 x4 (Honey x4)',
+                                '4: 蜂蜜 x5 (Honey x5)',
+                                '5: 大毒蛛 (Large Toxic Kumori)',
+                                '6: 大毒蛛 (Large Toxic Kumori)'
+                            ],
+                            '礦物 (Mining) DC 21': [
+                                '1: 皇家鎧玉 (Royal Armor Sphere)',
+                                '2: 靈鶴石 (Carbalite Ore)',
+                                '3: 皇家鎧玉 (Royal Armor Sphere)',
+                                '4: 靈鶴石 (Carbalite Ore)',
+                                '5: 皇家鎧玉 (Royal Armor Sphere)',
+                                '6: 靈鶴石 (Carbalite Ore)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 19': [
+                                '1: 毒菇 x3 (Toadstool x3)',
+                                '2: 混沌真菌 (Chaos Mushroom)',
+                                '3: 藍蘑菇 x2 (Blue Mushroom x2)',
+                                '4: 龍之托斯特菇 (Dragon Toadstool)',
+                                '5: 麻痺蘑菇 x3 (Parashroom x3)',
+                                '6: 龍之托斯特菇 (Dragon Toadstool)'
+                            ],
+                            '植物 (Plants) DC 20': [
+                                '1: 針果 x4 (Needleberry x4)',
+                                '2: 打消果實 x2 (Nulberry x2)',
+                                '3: 怪力種子 (Might Seed)',
+                                '4: 暮光草根 x2 (Gloamgrass Root x2)',
+                                '5: 忍耐種子 (Adamant Seed)',
+                                '6: 雙蓋紅花 (Dosbiscus)'
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                name: '雪峰山群 (Snowy Mountains)',
+                skills: { survival: 16, observation: 16, nature: 14 },
+                diceType: 'd6',
+                levels: [
+                    {
+                        playerLevel: '1-4',
+                        resources: {
+                            '骸骨堆 (Bonepile) DC 16': [
+                                '1: 骨頭 (Bone)',
+                                '2: 骨頭 (Bone)',
+                                '3: 小骨殼 (Sm Bone Husk)',
+                                '4: 小骨殼 (Sm Bone Husk)',
+                                '5: 小魔物骨 (Sm Monster Bone)',
+                                '6: 小魔物骨 (Sm Monster Bone)'
+                            ],
+                            '魚 (Fish) DC 18': [
+                                '1: 壽司魚 (Sushifish)',
+                                '2: 爆裂龍魚 (Burst Arrowana)',
+                                '3: 爆裂龍魚 (Burst Arrowana)',
+                                '4: 爆彈龍魚 (Bomb Arrowana)',
+                                '5: 小金魚 (Small Goldenfish)',
+                                '6: 小金魚 (Small Goldenfish)'
+                            ],
+                            '昆蟲 (Insect) DC 17': [
+                                '1: 蟲之骸 (Insect Husks)',
+                                '2: 螢火蟲 (Firefly)',
+                                '3: 獨角仙 (Carpenterbug)',
+                                '4: 苦蟲 (Bitterbug)',
+                                '5: 壓蟲 (Cricket)',
+                                '6: 閃光蟲 (Flashbug)'
+                            ],
+                            '礦物 (Mining) DC 12': [
+                                '1: 石頭 (Stone)',
+                                '2: 冰結晶 (Ice Crystal)',
+                                '3: 冰結晶 (Ice Crystal)',
+                                '4: 鎧玉 (Armor Sphere)',
+                                '5: 大地結晶 (Earth Crystal)',
+                                '6: 上鎧玉 (Hard Armor Sphere)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 14': [
+                                '1: 藍蘑菇 (Blue Mushroom)',
+                                '2: 藍蘑菇 (Blue Mushroom)',
+                                '3: 藍蘑菇 (Blue Mushroom)',
+                                '4: 藍蘑菇 (Blue Mushroom)',
+                                '5: 藍蘑菇 (Blue Mushroom)',
+                                '6: 麻痺蘑菇 (Parashroom)'
+                            ],
+                            '植物 (Plants) DC 14': [
+                                '1: 藥草 (Herb)',
+                                '2: 雪山草 (Snow Herb)',
+                                '3: 常春藤葉 (Ivy)',
+                                '4: 染色果 (Paintberry)',
+                                '5: 黏著草 (Sap Plant)',
+                                '6: 冰凍漿果 (Frozen Berry)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '5-10',
+                        resources: {
+                            '骸骨堆 (Bonepile) DC 18': [
+                                '1: 小骨堆 (Sm Bone Husk)',
+                                '2: 巨大骨 (Jumbo Bone)',
+                                '3: 獸骨 (Brute Bone)',
+                                '4: 獸骨 (Brute Bone)',
+                                '5: 魔物骨+ (Monster Bone+)',
+                                '6: 魔物骨+ (Monster Bone+)'
+                            ],
+                            '魚 (Fish) DC 20': [
+                                '1: 壽司魚 (Sushifish)',
+                                '2: 爆裂龍魚 (Burst Arrowana)',
+                                '3: 針鮪魚 (Pin Tuna)',
+                                '4: 小金魚 (Small Goldenfish)',
+                                '5: 小金魚 (Small Goldenfish)',
+                                '6: 貪吃鮪魚 (Glutton Tuna)'
+                            ],
+                            '昆蟲 (Insect) DC 19': [
+                                '1: 螢火蟲 (Firefly)',
+                                '2: 苦蟲 (Bitterbug)',
+                                '3: 閃光蟲 (Flashbug)',
+                                '4: 閃光蟲 (Flashbug)',
+                                '5: 不死蟲 (Godbug)',
+                                '6: 不死蟲 (Godbug)'
+                            ],
+                            '礦物 (Mining) DC 14': [
+                                '1: 冰結晶 (Ice Crystal)',
+                                '2: 上鎧玉 (Hard Armor Sphere)',
+                                '3: 冰結晶 (Ice Crystal)',
+                                '4: 鎧玉 (Armor Sphere)',
+                                '5: 燕雀石 (Machalite Ore)',
+                                '6: 燕雀石 (Machalite Ore)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 16': [
+                                '1: 藍蘑菇 (Blue Mushroom)',
+                                '2: 藍蘑菇 (Blue Mushroom)',
+                                '3: 藍蘑菇 (Blue Mushroom)',
+                                '4: 藍蘑菇 (Blue Mushroom)',
+                                '5: 麻痺蘑菇 (Parashroom)',
+                                '6: 麻痺蘑菇 (Parashroom)'
+                            ],
+                            '植物 (Plants) DC 16': [
+                                '1: 打消果實 (Nullberry)',
+                                '2: 雪山草 (Snow Herb)',
+                                '3: 常春藤葉 (Ivy)',
+                                '4: 染色果 (Paintberry)',
+                                '5: 冰凍漿果 (Frozen Berry)',
+                                '6: 忍耐種子 (Adamant Seed)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '11-16',
+                        resources: {
+                            '骸骨堆 (Bonepile) DC 20': [
+                                '1: 魔物骨+ (Monster Bone+)',
+                                '2: 魔物骨+ (Monster Bone+)',
+                                '3: 魔物硬骨 (Monster Toughbone)',
+                                '4: 魔物硬骨 (Monster Toughbone)',
+                                '5: 大魔物骨 (Lg Monster Bone)',
+                                '6: 大魔物骨 (Lg Monster Bone)'
+                            ],
+                            '魚 (Fish) DC 22': [
+                                '1: 壽司魚 (Sushifish)',
+                                '2: 爆裂龍魚 (Burst Arrowana)',
+                                '3: 小金魚 (Small Goldenfish)',
+                                '4: 貪吃鮪魚 (Glutton Tuna)',
+                                '5: 旗魚 (Speartuna)',
+                                '6: 古代魚 (Ancient Fish)'
+                            ],
+                            '昆蟲 (Insect) DC 21': [
+                                '1: 壓蟲 (Cricket)',
+                                '2: 苦蟲 (Bitterbug)',
+                                '3: 不死蟲 (Godbug)',
+                                '4: 閃光蟲 (Flashbug)',
+                                '5: 不死蟲 (Godbug)',
+                                '6: 不死蟲 (Godbug)'
+                            ],
+                            '礦物 (Mining) DC 16': [
+                                '1: 燕雀石 (Machalite Ore)',
+                                '2: 上鎧玉 (Hard Armor Sphere)',
+                                '3: 尖鎧玉 (Heavy Armor Sphere)',
+                                '4: 輝龍石 (Dragonite Ore)',
+                                '5: 靈鶴石 (Carbalite Ore)',
+                                '6: 真鎧玉 (Royal Armor Sphere)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 18': [
+                                '1: 藍蘑菇 (Blue Mushroom)',
+                                '2: 藍蘑菇 (Blue Mushroom)',
+                                '3: 藍蘑菇 (Blue Mushroom)',
+                                '4: 麻痺蘑菇 (Parashroom)',
+                                '5: 麻痺蘑菇 (Parashroom)',
+                                '6: 麻痺蘑菇 (Parashroom)'
+                            ],
+                            '植物 (Plants) DC 18': [
+                                '1: 打消果實 (Nullberry)',
+                                '2: 藥草 (Herb)',
+                                '3: 雪山草 (Snow Herb)',
+                                '4: 冰凍漿果 (Frozen Berry)',
+                                '5: 忍耐種子 (Adamant Seed)',
+                                '6: 忍耐種子 (Adamant Seed)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '17-20',
+                        resources: {
+                            '骸骨堆 (Bonepile) DC 22': [
+                                '1: 大魔物骨 (Lg Monster Bone)',
+                                '2: 大魔物骨 (Lg Monster Bone)',
+                                '3: 魔物硬骨 (Monster Toughbone)',
+                                '4: 魔物硬骨 (Monster Toughbone)',
+                                '5: 古龍骨 (Elder Dragonbone)',
+                                '6: 古龍骨 (Elder Dragonbone)'
+                            ],
+                            '魚 (Fish) DC 24': [
+                                '1: 壽司魚 (Sushifish)',
+                                '2: 小金魚 (Small Goldenfish)',
+                                '3: POP魚 (Popfish)',
+                                '4: 古代魚 (Ancient Fish)',
+                                '5: 旗魚 (Speartuna)',
+                                '6: 美食家鮪魚 (Gastronome Tuna)'
+                            ],
+                            '昆蟲 (Insect) DC 23': [
+                                '1: 蜂蜜 (Honey)',
+                                '2: 苦蟲 (Bitterbug)',
+                                '3: 不死蟲 (Godbug)',
+                                '4: 閃光蟲 (Flashbug)',
+                                '5: 不死蟲 (Godbug)',
+                                '6: 皇帝蝗蟲 (Emperor Locust)'
+                            ],
+                            '礦物 (Mining) DC 18': [
+                                '1: 輝龍石 (Dragonite Ore)',
+                                '2: 輝龍石 (Dragonite Ore)',
+                                '3: 尖鎧玉 (Heavy Armor Sphere)',
+                                '4: 靈鶴石 (Carbalite Ore)',
+                                '5: 靈鶴石 (Carbalite Ore)',
+                                '6: 真鎧玉 (Royal Armor Sphere)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 20': [
+                                '1: 藍蘑菇 (Blue Mushroom)',
+                                '2: 藍蘑菇 (Blue Mushroom)',
+                                '3: 怪力種子 (Might Seed)',
+                                '4: 麻痺蘑菇 (Parashroom)',
+                                '5: 黏著菇 (Bindshroom)',
+                                '6: 龍之托斯特菇 (Dragon Toadstool)'
+                            ],
+                            '植物 (Plants) DC 20': [
+                                '1: 雪山草 (Snow Herb)',
+                                '2: 忍耐種子 (Adamant Seed)',
+                                '3: 冰凍漿果 (Frozen Berry)',
+                                '4: 染色果 (Paintberry)',
+                                '5: 打消果實 (Nullberry)',
+                                '6: 星見花 (Stargazer Flower)'
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                name: '青翠丘陵 (Verdant Hills)',
+                skills: { survival: 10, observation: 19, nature: 10 },
+                diceType: 'd6',
+                levels: [
+                    {
+                        playerLevel: '1-4',
+                        resources: {
+                            '骸骨 (Bonepile) DC 11': [
+                                '1: 骨頭 (Bone)',
+                                '2: 小骨殼 (Sm Bone Husk)',
+                                '3: 小骨殼 (Sm Bone Husk)',
+                                '4: 大骨殼 (Lg Bone Husk)',
+                                '5: 鳥獸骨 (Bird Wyvern Bone)',
+                                '6: 小魔物骨 (Sm Monster Bone)'
+                            ],
+                            '魚 (Fish) DC 10': [
+                                '1: 壽司魚 (Sushifish)',
+                                '2: 針鮪魚 (Pin Tuna)',
+                                '3: 針鮪魚 (Pin Tuna)',
+                                '4: 爆裂龍魚 (Burst Arrowana)',
+                                '5: POP魚 (Popfish)',
+                                '6: 小金魚 (Small Goldenfish)'
+                            ],
+                            '昆蟲 (Insect) DC 12': [
+                                '1: 蟲之骸 (Insect Husk)',
+                                '2: 苦蟲 (Bitterbug)',
+                                '3: 獨角仙 (Carpenterbug)',
+                                '4: 蜂蜜 (Honey)',
+                                '5: 蜘蛛網 (Spiderweb)',
+                                '6: 閃光蟲 (Flashbug)'
+                            ],
+                            '礦石 (Mining) DC 14': [
+                                '1: 石頭 (Stone)',
+                                '2: 大地結晶 (Earth Crystal)',
+                                '3: 大地結晶 (Earth Crystal)',
+                                '4: 鎧玉 (Armor Sphere)',
+                                '5: 鎧玉 (Armor Sphere)',
+                                '6: 燕雀石 (Machalite Ore)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 10': [
+                                '1: 藍蘑菇 (Blue Mushroom)',
+                                '2: 藍蘑菇 (Blue Mushroom)',
+                                '3: 藍蘑菇 (Blue Mushroom)',
+                                '4: 毒菇 (Toadstool)',
+                                '5: 毒菇 (Toadstool)',
+                                '6: 爆炸菇 (Nitroshroom)'
+                            ],
+                            '植物 (Plants) DC 10': [
+                                '1: 藥草 (Herb)',
+                                '2: 常春藤葉 (Ivy)',
+                                '3: 睡眠草 (Sleep Herb)',
+                                '4: 空心果 (Huskberry)',
+                                '5: 爆裂果實 (Bomberry)',
+                                '6: 解毒草 (Antidote Herb)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '5-10',
+                        resources: {
+                            '骸骨 (Bonepile) DC 11': [
+                                '1: 小骨殼 (Sm Bone Husk)',
+                                '2: 大骨殼 (Lg Bone Husk)',
+                                '3: 小魔物骨 (Sm Monster Bone)',
+                                '4: 中魔物骨 (Med Monster Bone)',
+                                '5: 魔物骨+ (Monster Bone+)',
+                                '6: 野獸骨 (Brute Bone)'
+                            ],
+                            '魚 (Fish) DC 12': [
+                                '1: 壽司魚 (Sushifish)',
+                                '2: 爆裂龍魚 (Burst Arrowana)',
+                                '3: 針鮪魚 (Pin Tuna)',
+                                '4: POP魚 (Popfish)',
+                                '5: 貪吃鮪魚 (Glutton Tuna)',
+                                '6: 小金魚 (Small Goldenfish)'
+                            ],
+                            '昆蟲 (Insect) DC 10': [
+                                '1: 蜘蛛網 (Spiderweb)',
+                                '2: 蜂蜜 (Honey)',
+                                '3: 苦蟲 (Bitterbug)',
+                                '4: 不死蟲 (Godbug)',
+                                '5: 閃光蟲 (Flashbug)',
+                                '6: 雷光蟲 (Thunderbug)'
+                            ],
+                            '礦石 (Mining) DC 14': [
+                                '1: 大地結晶 (Earth Crystal)',
+                                '2: 鎧玉 (Armor Sphere)',
+                                '3: 燕雀石 (Machalite Ore)',
+                                '4: 上鎧玉 (Hard Armor Sphere)',
+                                '5: 燕雀石 (Machalite Ore)',
+                                '6: 尖鎧玉 (Heavy Armor Sphere)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 10': [
+                                '1: 毒菇 (Toadstool)',
+                                '2: 爆炸菇 (Nitroshroom)',
+                                '3: 毒菇 (Toadstool)',
+                                '4: 藍蘑菇 (Blue Mushroom)',
+                                '5: 麻痺蘑菇 (Parashroom)',
+                                '6: 麻痺蘑菇 (Parashroom)'
+                            ],
+                            '植物 (Plants) DC 10': [
+                                '1: 藥草 (Herb)',
+                                '2: 木天蓼 (Felvine)',
+                                '3: 打消果實 (Nullberry)',
+                                '4: 暮光草根 (Gloamgrass Root)',
+                                '5: 針果 (Needleberry)',
+                                '6: 暮光草根 (Gloamgrass Root)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '11-16',
+                        resources: {
+                            '骸骨 (Bonepile) DC 16': [
+                                '1: 魔物骨+ (Monster Bone+)',
+                                '2: 中魔物骨 (Med Monster Bone)',
+                                '3: 大魔物骨 (Lg Monster Bone)',
+                                '4: 大魔物骨 (Lg Monster Bone)',
+                                '5: 魔物硬骨 (Monster Toughbone)',
+                                '6: 魔物硬骨 (Monster Toughbone)'
+                            ],
+                            '魚 (Fish) DC 14': [
+                                '1: 爆彈龍魚 (Bomb Arrowana)',
+                                '2: 爆裂龍魚 (Burst Arrowana)',
+                                '3: 小金魚 (Small Goldenfish)',
+                                '4: 貪吃鮪魚 (Glutton Tuna)',
+                                '5: 藍切魚 (Blue Cutthroat)',
+                                '6: 古代魚 (Ancient Fish)'
+                            ],
+                            '昆蟲 (Insect) DC 16': [
+                                '1: 閃光蟲 (Flashbug)',
+                                '2: 不死蟲 (Godbug)',
+                                '3: 不死蟲 (Godbug)',
+                                '4: 雷光蟲 (Thunderbug)',
+                                '5: 毒蛛 (Toxic Kumori)',
+                                '6: 花朵蟋蟀 (Blossom Cricket)'
+                            ],
+                            '礦石 (Mining) DC 20': [
+                                '1: 上鎧玉 (Hard Armor Sphere)',
+                                '2: 輝龍石 (Dragonite Ore)',
+                                '3: 尖鎧玉 (Heavy Armor Sphere)',
+                                '4: 輝龍石 (Dragonite Ore)',
+                                '5: 生命結晶 (Lifecrystals)',
+                                '6: 真鎧玉 (Royal Armor Sphere)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 16': [
+                                '1: 毒菇 (Toadstool)',
+                                '2: 黏著菇 (Bindshroom)',
+                                '3: 興奮蘑菇 (Exciteshroom)',
+                                '4: 黏著菇 (Bindshroom)',
+                                '5: 麻痺蘑菇 (Parashroom)',
+                                '6: 興奮蘑菇 (Exciteshroom)'
+                            ],
+                            '植物 (Plants) DC 17': [
+                                '1: 藥草 (Herb)',
+                                '2: 怪力種子 (Might Seed)',
+                                '3: 忍耐種子 (Adamant Seed)',
+                                '4: 染色果 (Paintberry)',
+                                '5: 空氣草 (Airweed)',
+                                '6: 怪力種子 (Might Seed)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '17-20',
+                        resources: {
+                            '骸骨 (Bonepile) DC 18': [
+                                '1: 小骨殼 (Sm Bone Husk)',
+                                '2: 大魔物骨 (Lg Monster Bone)',
+                                '3: 魔物硬骨 (Monster Toughbone)',
+                                '4: 魔物硬骨 (Monster Toughbone)',
+                                '5: 魔物硬骨 (Monster Toughbone)',
+                                '6: 古龍骨 (Elder Dragonbone)'
+                            ],
+                            '魚 (Fish) DC 15': [
+                                '1: 旗魚 (Speartuna)',
+                                '2: 爆裂龍魚 (Burst Arrowana)',
+                                '3: 爆彈龍魚 (Bomb Arrowana)',
+                                '4: 古代魚 (Ancient Fish)',
+                                '5: 旗魚 (Speartuna)',
+                                '6: 美食家鮪魚 (Gastronome Tuna)'
+                            ],
+                            '昆蟲 (Insect) DC 20': [
+                                '1: 閃光蟲 (Flashbug)',
+                                '2: 大角蜂 (Great Hornfly)',
+                                '3: 大毒蛛 (Large Toxic Kumori)',
+                                '4: 皇帝蝗蟲 (Emperor Locust)',
+                                '5: 幻蝶 (Phantom Butterfly)',
+                                '6: 幻蝶 (Phantom Butterfly)'
+                            ],
+                            '礦石 (Mining) DC 25': [
+                                '1: 光水晶 (Lightcrystal)',
+                                '2: 生命結晶 (Lifecrystals)',
+                                '3: 靈鶴石 (Carbalite Ore)',
+                                '4: 靈鶴石 (Carbalite Ore)',
+                                '5: 真鎧玉 (Royal Armor Sphere)',
+                                '6: 真鎧玉 (Royal Armor Sphere)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 18': [
+                                '1: 黏著菇 (Bindshroom)',
+                                '2: 興奮蘑菇 (Exciteshroom)',
+                                '3: 混沌真菌 (Chaos Mushroom)',
+                                '4: 龍之托斯特菇 (Dragon Toadstool)',
+                                '5: 混沌真菌 (Chaos Mushroom)',
+                                '6: 龍之托斯特菇 (Dragon Toadstool)'
+                            ],
+                            '植物 (Plants) DC 18': [
+                                '1: 藥草 (Herb)',
+                                '2: 空心果 (Huskberry)',
+                                '3: 忍耐種子 (Adamant Seed)',
+                                '4: 暮光草根 (Gloamgrass Root)',
+                                '5: 打消果實 (Nullberry)',
+                                '6: 星見花 (Stargazer Flower)'
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                name: '烈焰火山 (Volcano)',
+                skills: { survival: 14, observation: 18, nature: 16 },
+                diceType: 'd10',
+                levels: [
+                    {
+                        playerLevel: '1-4',
+                        resources: {
+                            '骸骨堆 (Bonepile) DC 14': [
+                                '1: 骨頭 (Bone)',
+                                '2: 骨頭 (Bone)',
+                                '3: 小骨殼 (Sm Bone Husk)',
+                                '4: 小骨殼 (Sm Bone Husk)',
+                                '5: 小骨殼 (Sm Bone Husk)',
+                                '6: 巨大骨 (Jumbo Bone)'
+                            ],
+                            '昆蟲 (Insect) DC 17': [
+                                '1: 蟲之骸 (Insect Husks)',
+                                '2: 蟲之骸 (Insect Husk)',
+                                '3: 蟲之骸 (Insect Husk)',
+                                '4: 蟲之骸 (Insect Husk)',
+                                '5: 苦蟲 (Bitterbug)',
+                                '6: 蛇蜂幼蟲 (Snakebee Larva)'
+                            ],
+                            '礦物 (Mining) DC 13': [
+                                '1: 石頭 (Stone)',
+                                '2: 鎧玉 (Armor Sphere)',
+                                '3: 大地結晶 (Earth Crystal)',
+                                '4: 大地結晶 (Earth Crystal)',
+                                '5: 鎧玉 (Armor Sphere)',
+                                '6: 燕雀石 (Machalite Ore)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 16': [
+                                '1: 爆炸菇 (Nitroshroom)',
+                                '2: 爆炸菇 (Nitroshroom)',
+                                '3: 爆炸菇 (Nitroshroom)',
+                                '4: 爆炸菇 (Nitroshroom)',
+                                '5: 爆炸菇 (Nitroshroom)',
+                                '6: 爆炸菇 (Nitroshroom)'
+                            ],
+                            '植物 (Plants) DC 16': [
+                                '1: 火藥草 (Fire Herb)',
+                                '2: 黏著草 (Sap Plant)',
+                                '3: 空心果 (Huskberry)',
+                                '4: 熱帶草莓 (Tropical Berry)',
+                                '5: 龍之種子 (Dragon Seed)',
+                                '6: 龍之種子 (Dragon Seed)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '5-10',
+                        resources: {
+                            '骸骨堆 (Bonepile) DC 16': [
+                                '1: 骨頭 (Bone)',
+                                '2: 小骨殼 (Sm Bone Husk)',
+                                '3: 小骨殼 (Sm Bone Husk)',
+                                '4: 小骨殼 (Sm Bone Husk)',
+                                '5: 大骨殼 (Lg Bone Husk)',
+                                '6: 魔物骨+ (Monster Bone+)'
+                            ],
+                            '昆蟲 (Insect) DC 19': [
+                                '1: 蟲之骸 (Insect Husk)',
+                                '2: 蟲之骸 (Insect Husk)',
+                                '3: 苦蟲 (Bitterbug)',
+                                '4: 土蝗 (Bughopper)',
+                                '5: 閃光蟲 (Flashbug)',
+                                '6: 不死蟲 (Godbug)'
+                            ],
+                            '礦物 (Mining) DC 15': [
+                                '1: 鎧玉 (Armor Sphere)',
+                                '2: 大地結晶 (Earth Crystal)',
+                                '3: 上鎧玉 (Hard Armor Sphere)',
+                                '4: 燕雀石 (Machalite Ore)',
+                                '5: 燕雀石 (Machalite Ore)',
+                                '6: 燕雀石 (Machalite Ore)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 18': [
+                                '1: 爆炸菇 (Nitroshroom)',
+                                '2: 爆炸菇 (Nitroshroom)',
+                                '3: 爆炸菇 (Nitroshroom)',
+                                '4: 爆炸菇 (Nitroshroom)',
+                                '5: 爆炸菇 (Nitroshroom)',
+                                '6: 龍之托斯特菇 (Dragon Toadstool)'
+                            ],
+                            '植物 (Plants) DC 18': [
+                                '1: 火藥草 (Fire Herb)',
+                                '2: 辣椒 (Hot Pepper)',
+                                '3: 空心果 (Huskberry)',
+                                '4: 熱帶草莓 (Tropical Berry)',
+                                '5: 龍之種子 (Dragon Seed)',
+                                '6: 龍之種子 (Dragon Seed)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '11-16',
+                        resources: {
+                            '骸骨堆 (Bonepile) DC 18': [
+                                '1: 小骨殼 (Sm Bone Husk)',
+                                '2: 魔物硬骨 (Monster Toughbone)',
+                                '3: 魔物硬骨 (Monster Toughbone)',
+                                '4: 大骨殼 (Lg Bone Husk)',
+                                '5: 大魔物骨 (Lg Monster Bone)',
+                                '6: 大魔物骨 (Lg Monster Bone)'
+                            ],
+                            '昆蟲 (Insect) DC 21': [
+                                '1: 蟲之骸 (Insect Husks)',
+                                '2: 獨角仙 (Carpenterbug)',
+                                '3: 閃光蟲 (Flashbug)',
+                                '4: 大角蜂 (Great Hornfly)',
+                                '5: 毒蛛 (Toxic Kumori)',
+                                '6: 不死蟲 (Godbug)'
+                            ],
+                            '礦物 (Mining) DC 17': [
+                                '1: 燕雀石 (Machalite Ore)',
+                                '2: 重鎧玉 (Heavy Armor Sphere)',
+                                '3: 輝龍石 (Dragonite Ore)',
+                                '4: 輝龍石 (Dragonite Ore)',
+                                '5: 重鎧玉 (Heavy Armor Sphere)',
+                                '6: 生命結晶 (Lifecrystals)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 20': [
+                                '1: 爆炸菇 (Nitroshroom)',
+                                '2: 爆炸菇 (Nitroshroom)',
+                                '3: 爆炸菇 (Nitroshroom)',
+                                '4: 爆炸菇 (Nitroshroom)',
+                                '5: 龍之托斯特菇 (Dragon Toadstool)',
+                                '6: 龍之托斯特菇 (Dragon Toadstool)'
+                            ],
+                            '植物 (Plants) DC 20': [
+                                '1: 火藥草 (Fire Herb)',
+                                '2: 辣椒 (Hot Pepper)',
+                                '3: 怪力種子 (Might Seed)',
+                                '4: 熱帶草莓 (Tropical Berry)',
+                                '5: 龍之種子 (Dragon Seed)',
+                                '6: 忍耐種子 (Adamant Seed)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '17-20',
+                        resources: {
+                            '骸骨堆 (Bonepile) DC 20': [
+                                '1: 中魔物骨 (Med Monster Bone)',
+                                '2: 小骨殼 (Sm Bone Husk)',
+                                '3: 大骨殼 (Lg Bone Husk)',
+                                '4: 大魔物骨 (Lg Monster Bone)',
+                                '5: 魔物硬骨 (Monster Toughbone)',
+                                '6: 古龍骨 (Elder Dragonbone)'
+                            ],
+                            '昆蟲 (Insect) DC 23': [
+                                '1: 蟲之骸 (Insect Husk)',
+                                '2: 不死蟲 (Godbug)',
+                                '3: 大角蜂 (Great Hornfly)',
+                                '4: 大毒蛛 (Large Toxic Kumori)',
+                                '5: 皇帝蝗蟲 (Emperor Locust)',
+                                '6: 王族聖甲蟲 (King Scarab)'
+                            ],
+                            '礦物 (Mining) DC 19': [
+                                '1: 輝龍石 (Dragonite Ore)',
+                                '2: 重鎧玉 (Heavy Armor Sphere)',
+                                '3: 輝龍石 (Dragonite Ore)',
+                                '4: 重鎧玉 (Heavy Armor Sphere)',
+                                '5: 靈鶴石 (Carbalite Ore)',
+                                '6: 真鎧玉 (Royal Armor Sphere)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 22': [
+                                '1: 爆炸菇 (Nitroshroom)',
+                                '2: 爆炸菇 (Nitroshroom)',
+                                '3: 爆炸菇 (Nitroshroom)',
+                                '4: 龍之托斯特菇 (Dragon Toadstool)',
+                                '5: 龍之托斯特菇 (Dragon Toadstool)',
+                                '6: 龍之托斯特菇 (Dragon Toadstool)'
+                            ],
+                            '植物 (Plants) DC 22': [
+                                '1: 火藥草 (Fire Herb)',
+                                '2: 辣椒 (Hot Pepper)',
+                                '3: 怪力種子 (Might Seed)',
+                                '4: 熱帶草莓 (Tropical Berry)',
+                                '5: 龍之種子 (Dragon Seed)',
+                                '6: 忍耐種子 (Adamant Seed)'
+                            ]
+                        }
+                    }
+                ]
+            },
+            {
+                name: '潮濕沼地 (The Wetlands)',
+                skills: { survival: 14, observation: 18, nature: 12 },
+                diceType: 'd10',
+                levels: [
+                    {
+                        playerLevel: '1-4',
+                        resources: {
+                            '骸骨堆 (Bonepile) DC 13': [
+                                '1: 骨頭 (Bone)',
+                                '2: 骨頭 (Bone)',
+                                '3: 小骨殼 (Sm Bone Husk)',
+                                '4: 大骨殼 (Lg Bone Husk)',
+                                '5: 鳥龍種的骨 (Bird Wyvern Bone)',
+                                '6: 小魔物骨 (Sm Monster Bone)'
+                            ],
+                            '昆蟲 (Insect) DC 10': [
+                                '1: 蟲之骸 (Insect Husk)',
+                                '2: 蜘蛛網 (Spiderweb)',
+                                '3: 螢火蟲 (Firefly)',
+                                '4: 蠕蟲 (Worm)',
+                                '5: 苦蟲 (Bitterbug)',
+                                '6: 不死蟲 (Godbug)'
+                            ],
+                            '礦物 (Mining) DC 12': [
+                                '1: 石頭 (Stone)',
+                                '2: 大地結晶 (Earth Crystal)',
+                                '3: 大地結晶 (Earth Crystal)',
+                                '4: 鎧玉 (Armor Sphere)',
+                                '5: 燕雀石 (Machalite Ore)',
+                                '6: 上鎧玉 (Hard Armor Sphere)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 10': [
+                                '1: 藍蘑菇 (Blue Mushroom)',
+                                '2: 毒菇 (Toadstool)',
+                                '3: 爆炸菇 (Nitroshroom)',
+                                '4: 毒菇 (Toadstool)',
+                                '5: 藍蘑菇 (Blue Mushroom)',
+                                '6: 麻痺蘑菇 (Parashroom)'
+                            ],
+                            '植物 (Plants) DC 14': [
+                                '1: 藥草 (Herb)',
+                                '2: 空心果 (Huskberry)',
+                                '3: 解毒草 (Antidote Herb)',
+                                '4: 木天蓼 (Felvine)',
+                                '5: 打消果實 (Nullberry)',
+                                '6: 暮光草根 (Gloamgrass Root)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '5-10',
+                        resources: {
+                            '骸骨堆 (Bonepile) DC 17': [
+                                '1: 小骨殼 (Sm Bone Husk)',
+                                '2: 骨頭 (Bone)',
+                                '3: 巨大骨 (Jumbo Bone)',
+                                '4: 獸骨 (Brute Bone)',
+                                '5: 中魔物骨 (Med Monster Bone)',
+                                '6: 魔物骨+ (Monster Bone+)'
+                            ],
+                            '昆蟲 (Insect) DC 16': [
+                                '1: 蠕蟲 (Worm)',
+                                '2: 蜘蛛網 (Spiderweb)',
+                                '3: 不死蟲 (Godbug)',
+                                '4: 閃光蟲 (Flashbug)',
+                                '5: 閃光蟲 (Flashbug)',
+                                '6: 不死蟲 (Godbug)'
+                            ],
+                            '礦物 (Mining) DC 18': [
+                                '1: 大地結晶 (Earth Crystal)',
+                                '2: 燕雀石 (Machalite Ore)',
+                                '3: 燕雀石 (Machalite Ore)',
+                                '4: 上鎧玉 (Hard Armor Sphere)',
+                                '5: 上鎧玉 (Hard Armor Sphere)',
+                                '6: 輝龍石 (Dragonite Ore)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 14': [
+                                '1: 毒菇 (Toadstool)',
+                                '2: 爆炸菇 (Nitroshroom)',
+                                '3: 毒菇 (Toadstool)',
+                                '4: 藍蘑菇 (Blue Mushroom)',
+                                '5: 麻痺蘑菇 (Parashroom)',
+                                '6: 麻痺蘑菇 (Parashroom)'
+                            ],
+                            '植物 (Plants) DC 19': [
+                                '1: 藥草 (Herb)',
+                                '2: 空心果 (Huskberry)',
+                                '3: 解毒草 (Antidote Herb)',
+                                '4: 龍之種子 (Dragon Seed)',
+                                '5: 散彈果 (Scatternut)',
+                                '6: 暮光草根 (Gloamgrass Root)'
+                            ]
+                        }
+                    },
+                    {
+                        playerLevel: '11-20',
+                        resources: {
+                            '骸骨堆 (Bonepile) DC 21': [
+                                '1: 小骨殼 (Sm Bone Husk)',
+                                '2: 小魔物骨 (Sm Monster Bone)',
+                                '3: 獸骨 (Brute Bone)',
+                                '4: 中魔物骨 (Med Monster Bone)',
+                                '5: 魔物骨+ (Monster Bone+)',
+                                '6: 大魔物骨 (Lg Monster Bone)'
+                            ],
+                            '昆蟲 (Insect) DC 20': [
+                                '1: 閃光蟲 (Flashbug)',
+                                '2: 不死蟲 (Godbug)',
+                                '3: 雷光蟲 (Thunderbug)',
+                                '4: 毒蛛 (Toxic Kumori)',
+                                '5: 大角蜂 (Great Hornfly)',
+                                '6: 大毒蛛 (Large Toxic Kumori)'
+                            ],
+                            '礦物 (Mining) DC 23': [
+                                '1: 燕雀石 (Machalite Ore)',
+                                '2: 重鎧玉 (Heavy Armor Sphere)',
+                                '3: 輝龍石 (Dragonite Ore)',
+                                '4: 生命結晶 (Lifecrystals)',
+                                '5: 靈鶴石 (Carbalite Ore)',
+                                '6: 真鎧玉 (Royal Armor Sphere)'
+                            ],
+                            '蘑菇 (Mushrooms) DC 18': [
+                                '1: 毒菇 (Toadstool)',
+                                '2: 藍蘑菇 (Blue Mushroom)',
+                                '3: 興奮蘑菇 (Exciteshroom)',
+                                '4: 黏著菇 (Bindshroom)',
+                                '5: 龍之托斯特菇 (Dragon Toadstool)',
+                                '6: 混沌真菌 (Chaos Mushroom)'
+                            ],
+                            '植物 (Plants) DC 25': [
+                                '1: 黏著草 (Sap Plant)',
+                                '2: 暮光草根 (Gloamgrass Root)',
+                                '3: 解毒草 (Antidote Herb)',
+                                '4: 忍耐種子 (Adamant Seed)',
+                                '5: 怪力種子 (Might Seed)',
+                                '6: 雙蓋紅花 (Dosbiscus)'
+                            ]
+                        }
+                    }
+                ]
+            }
+        ];
+
+        // 根據規則書的「適用地貌」定義每種地形所屬的細分地貌清單
+        function getBiomesForTerrain(name) {
+            const cleanName = name.trim();
+            if (cleanName.includes('先祖平原') || cleanName.includes('Ancestral Steppes')) {
+                return ['平原', '森林', '山脈'];
+            }
+            if (cleanName.includes('沙丘') || cleanName.includes('Dunes')) {
+                return ['沙漠', '荒野', '礫原', '綠洲', '山丘'];
+            }
+            if (cleanName.includes('巨人密林') || cleanName.includes('Jungle')) {
+                return ['海岸', '森林', '山丘', '山脈'];
+            }
+            if (cleanName.includes('開闊海域') || cleanName.includes('Ocean')) {
+                return ['海岸', '海島', '水中'];
+            }
+            if (cleanName.includes('腐朽山谷') || cleanName.includes('Rotten Vale')) {
+                return ['幽暗地域', '山谷', '沼澤'];
+            }
+            if (cleanName.includes('雪峰山群') || cleanName.includes('Snowy Mountains')) {
+                return ['冰原', '雪地', '山脈', '凍湖'];
+            }
+            if (cleanName.includes('青翠丘陵') || cleanName.includes('Verdant Hills')) {
+                return ['森林', '山脈', '山丘'];
+            }
+            if (cleanName.includes('烈焰火山') || cleanName.includes('Volcano')) {
+                return ['荒野', '礫原', '山脈', '山丘', '山谷', '熔岩', '岩漿', '乾旱', '崎嶇地形'];
+            }
+            if (cleanName.includes('潮濕沼地') || cleanName.includes('Wetlands')) {
+                return ['幽暗地域', '沼澤', '海岸'];
+            }
+            return [];
+        }
+
+        // 22 個完全分拆、各自獨立的地貌按鈕（含全部地貌）
+        const biomesList = [
+            { key: 'all', label: '🌐 全部地貌', style: 'bg-indigo-600/30 border-indigo-500 text-indigo-200 ring-1 ring-indigo-500/30' },
+            { key: '平原', label: '🌾 平原', style: 'bg-emerald-600/30 border-emerald-500 text-emerald-200 ring-1 ring-emerald-500/30' },
+            { key: '森林', label: '🌲 森林', style: 'bg-green-600/30 border-green-500 text-green-200 ring-1 ring-green-500/30' },
+            { key: '山脈', label: '🏔️ 山脈', style: 'bg-slate-600/30 border-slate-500 text-slate-200 ring-1 ring-slate-500/30' },
+            { key: '沙漠', label: '🏜️ 沙漠', style: 'bg-amber-600/30 border-amber-500 text-amber-200 ring-1 ring-amber-450/30' },
+            { key: '荒野', label: '🏜️ 荒野', style: 'bg-orange-600/30 border-orange-500 text-orange-200 ring-1 ring-orange-500/30' },
+            { key: '礫原', label: '🪨 礫原', style: 'bg-neutral-600/30 border-neutral-500 text-neutral-200 ring-1 ring-neutral-500/30' },
+            { key: '綠洲', label: '🌴 綠洲', style: 'bg-teal-600/30 border-teal-500 text-teal-200 ring-1 ring-teal-500/30' },
+            { key: '山丘', label: '⛰️ 山丘', style: 'bg-yellow-600/30 border-yellow-500 text-yellow-200 ring-1 ring-yellow-500/30' },
+            { key: '海岸', label: '🏖️ 海岸', style: 'bg-cyan-600/30 border-cyan-500 text-cyan-200 ring-1 ring-cyan-500/30' },
+            { key: '海島', label: '🏝️ 海島', style: 'bg-sky-600/30 border-sky-500 text-sky-200 ring-1 ring-sky-500/30' },
+            { key: '水中', label: '🌊 水中', style: 'bg-blue-600/30 border-blue-500 text-blue-200 ring-1 ring-blue-500/30' },
+            { key: '幽暗地域', label: '😈 幽暗地域', style: 'bg-purple-600/30 border-purple-500 text-purple-200 ring-1 ring-purple-500/30' },
+            { key: '山谷', label: '⛰️ 山谷', style: 'bg-zinc-600/30 border-zinc-500 text-zinc-200 ring-1 ring-zinc-500/30' },
+            { key: '沼澤', label: '🐊 沼澤', style: 'bg-lime-600/30 border-lime-500 text-lime-200 ring-1 ring-lime-500/30' },
+            { key: '冰原', label: '❄️ 冰原', style: 'bg-sky-300/20 border-sky-300 text-sky-100 ring-1 ring-sky-300/30' },
+            { key: '雪地', label: '🌨️ 雪地', style: 'bg-indigo-300/20 border-indigo-300 text-indigo-100 ring-1 ring-indigo-300/30' },
+            { key: '凍湖', label: '🧊 凍湖', style: 'bg-teal-300/20 border-teal-300 text-teal-100 ring-1 ring-teal-300/30' },
+            { key: '熔岩', label: '🌋 熔岩', style: 'bg-rose-600/30 border-rose-500 text-rose-200 ring-1 ring-rose-500/30' },
+            { key: '岩漿', label: '🔥 岩漿', style: 'bg-red-600/30 border-red-500 text-red-200 ring-1 ring-red-500/30' },
+            { key: '乾旱', label: '☀️ 乾旱', style: 'bg-amber-500/20 border-amber-400 text-amber-100 ring-1 ring-amber-450/30' },
+            { key: '崎嶇地形', label: '🧗 崎嶇地形', style: 'bg-stone-600/30 border-stone-500 text-stone-200 ring-1 ring-stone-500/30' }
+        ];
+
+        // 備用技能規則
+        const backupSkillRules = {
+            'bone': { label: '骨堆 (Bonepiles)', skill: '智力（歷史）或 感知（觀察）' },
+            'fish': { label: '魚類 (Fish)', skill: '力量（運動）或 敏捷（巧手）' },
+            'insect': { label: '昆蟲 (Insects)', skill: '敏捷（巧手）或 感知（觀察）' },
+            'mining': { label: '礦物 (Minerals)', skill: '力量（運動）' },
+            'mushroom': { label: '菇類 (Mushrooms)', skill: '智力（自然）或 感知（求生）' },
+            'plant': { label: '植物 (Plants)', skill: '智力（自然）或 感知（求生）' }
+        };
+
+        let backpack = {};
+
+        // 取得分類 Key
+        function getCategoryKey(heading) {
+            const lower = heading.toLowerCase();
+            if (lower.includes('bone') || lower.includes('骨')) return 'bone';
+            if (lower.includes('fish') || lower.includes('魚')) return 'fish';
+            if (lower.includes('insect') || lower.includes('昆')) return 'insect';
+            if (lower.includes('min') || lower.includes('礦')) return 'mining';
+            if (lower.includes('mush') || lower.includes('菇')) return 'mushroom';
+            if (lower.includes('plant') || lower.includes('植')) return 'plant';
+            return 'unknown';
+        }
+    </script>
+
+    <script>
+        const container = document.getElementById('accordion-container');
+
+        const toggleAccordion = (header, content, isLevel = false) => {
+            const isOpen = header.classList.contains('open');
+            
+            if (isOpen) {
+                header.classList.remove('open');
+                content.classList.remove('open');
+                if (isLevel) {
+                    header.classList.remove('bg-indigo-900/40', 'border-indigo-500/50');
+                    header.classList.add('bg-slate-700/50', 'border-slate-800');
+                } else {
+                    header.classList.remove('bg-indigo-950/60', 'border-indigo-500/50');
+                    header.classList.add('bg-slate-900', 'border-slate-800');
+                }
+            } else {
+                header.classList.add('open');
+                content.classList.add('open');
+                if (isLevel) {
+                    header.classList.remove('bg-slate-700/50', 'border-slate-800');
+                    header.classList.add('bg-indigo-900/40', 'border-indigo-500/50');
+                } else {
+                    header.classList.remove('bg-slate-900', 'border-slate-800');
+                    header.classList.add('bg-indigo-950/60', 'border-indigo-500/50');
+                }
+            }
+        };
+
+        // 建立 UI 結構
+        terrainData.forEach((region, rIndex) => {
+            const regionWrapper = document.createElement('div');
+            regionWrapper.className = 'region-accordion bg-slate-900/40 border border-slate-800 rounded-xl overflow-hidden shadow-md transition-all duration-300';
+            regionWrapper.setAttribute('data-region-name', region.name);
+            
+            // 綁定地貌資訊以便篩選
+            const biomes = getBiomesForTerrain(region.name);
+            regionWrapper.setAttribute('data-biomes', JSON.stringify(biomes));
+            
+            // 建立地貌標籤徽章 HTML
+            const biomeBadgesHTML = biomes.map(b => {
+                const bInfo = biomesList.find(x => x.key === b);
+                const emoji = bInfo ? bInfo.label.split(' ')[0] : '🧭';
+                return `
+                    <span class="px-1.5 py-0.5 bg-slate-950 border border-slate-800/80 text-slate-300 rounded text-[10px] font-semibold flex items-center gap-1">
+                        <span>${emoji}</span>${b}
+                    </span>
+                `;
+            }).join(' ');
+
+            const header = document.createElement('div');
+            header.className = 'accordion-header flex flex-col sm:flex-row sm:justify-between sm:items-center p-4 bg-slate-900 hover:bg-slate-800 border-b border-transparent gap-2 transition-all';
+            header.innerHTML = `
+                <div class="flex flex-col gap-1.5">
+                    <div class="flex items-center space-x-3">
+                        <span class="w-2.5 h-2.5 rounded-full bg-indigo-500 shadow-glow"></span>
+                        <h2 class="text-base sm:text-lg font-bold text-slate-200">${region.name}</h2>
+                    </div>
+                    <div class="flex flex-wrap gap-1 items-center">
+                        <span class="text-[10px] text-slate-550 uppercase tracking-widest mr-1 font-bold">適用地貌:</span>
+                        ${biomeBadgesHTML}
+                    </div>
+                </div>
+                <div class="flex items-center justify-between sm:justify-end gap-3 mt-1 sm:mt-0 border-t border-slate-800/60 sm:border-t-0 pt-2 sm:pt-0">
+                    <span class="text-[11px] px-2 py-0.5 bg-slate-950 text-slate-450 rounded font-bold font-mono">求生/觀察/自然</span>
+                    <svg class="arrow w-5 h-5 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </div>
+            `;
+
+            const content = document.createElement('div');
+            content.className = 'accordion-content';
+
+            const inner = document.createElement('div');
+            inner.className = 'accordion-inner space-y-4 pb-4 px-4 sm:px-6 pt-4';
+
+            // 遍歷各玩家等級對應表
+            region.levels.forEach((level, lIndex) => {
+                const levelAccordionWrapper = document.createElement('div');
+                levelAccordionWrapper.className = 'level-accordion py-1';
+
+                const levelHeader = document.createElement('div');
+                levelHeader.className = 'level-accordion-header accordion-header flex justify-between items-center p-3 bg-slate-700/50 hover:bg-slate-600/50 border border-slate-800 rounded-lg transition-all';
+                levelHeader.innerHTML = `
+                    <h3 class="text-xs sm:text-sm font-semibold text-indigo-300">玩家等級 ${level.playerLevel}</h3>
+                    <svg class="arrow w-4 h-4 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                `;
+                
+                const levelContent = document.createElement('div');
+                levelContent.className = 'level-accordion-content accordion-content';
+
+                const levelInner = document.createElement('div');
+                levelInner.className = 'accordion-inner mt-3 space-y-4 pb-2';
+
+                const grid = document.createElement('div');
+                grid.className = 'grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4';
+
+                if (level.resources) {
+                    Object.entries(level.resources).forEach(([resourceType, items], cIndex) => {
+                        const tableContainer = document.createElement('div');
+                        tableContainer.className = 'resource-table-container bg-slate-950/40 p-3 rounded-xl border border-slate-800 shadow-inner hover:border-slate-700 transition-all';
+                        
+                        const colCategoryKey = getCategoryKey(resourceType);
+
+                        let tableHTML = `
+                            <h4 class="text-xs sm:text-sm font-semibold text-indigo-400 mb-2 pb-1 border-b border-slate-800 flex justify-between items-center">
+                                <span>${resourceType}</span>
+                                <span class="px-1.5 py-0.5 bg-slate-900 text-[10px] text-slate-500 rounded font-mono">d6</span>
+                            </h4>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left bg-slate-950 rounded-lg overflow-hidden resource-table text-xs sm:text-sm min-w-[240px]">
+                                    <thead>
+                                        <tr class="text-slate-400">
+                                            <th class="p-2 w-12 text-center font-mono">Y軸 (d6)</th>
+                                            <th class="p-2">採集材料</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                        `;
+
+                        items.forEach((item, itemIdx) => {
+                            const separatorIndex = item.indexOf(': ');
+                            const dice = item.substring(0, separatorIndex);
+                            const itemName = item.substring(separatorIndex + 2);
+
+                            tableHTML += `
+                                <tr class="border-t border-slate-900 hover:bg-slate-900/30 transition-all" 
+                                    data-region-name="${region.name}"
+                                    data-level-range="${level.playerLevel}"
+                                    data-category-key="${colCategoryKey}"
+                                    data-dice-y="${dice}"
+                                    data-raw-item="${itemName}">
+                                    <td class="p-2 text-center font-mono text-slate-550 font-bold bg-slate-900/20">${dice}</td>
+                                    <td class="p-2 text-slate-300 font-medium tracking-wide item-cell">${itemName}</td>
+                                </tr>
+                            `;
+                        });
+
+                        tableHTML += `</tbody></table></div>`;
+                        tableContainer.innerHTML = tableHTML;
+                        grid.appendChild(tableContainer);
+                    });
+                }
+                levelInner.appendChild(grid);
+                levelContent.appendChild(levelInner);
+                levelAccordionWrapper.appendChild(levelHeader);
+                levelAccordionWrapper.appendChild(levelContent);
+                inner.appendChild(levelAccordionWrapper);
+
+                levelHeader.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleAccordion(levelHeader, levelContent, true);
+                });
+            });
+
+            content.appendChild(inner);
+            regionWrapper.appendChild(header);
+            regionWrapper.appendChild(content);
+            container.appendChild(regionWrapper);
+
+            header.addEventListener('click', () => {
+                toggleAccordion(header, content, false);
+            });
+        });
+    </script>
+
+    <script>
+        // 雙頁籤切換系統
+        const tabTable = document.getElementById('tab-table');
+        const tabRules = document.getElementById('tab-rules');
+        const pageTable = document.getElementById('page-table');
+        const pageRules = document.getElementById('page-rules');
+
+        function switchTab(activeTab) {
+            if (activeTab === 'table') {
+                tabTable.className = "flex-1 py-2.5 text-sm font-bold rounded-lg text-amber-400 bg-slate-900/90 border border-slate-800 shadow transition-all duration-200 flex justify-center items-center gap-2 cursor-pointer";
+                tabRules.className = "flex-1 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:text-white transition-all duration-200 flex justify-center items-center gap-2 cursor-pointer";
+                pageTable.classList.remove('hidden');
+                pageRules.classList.add('hidden');
+            } else {
+                tabRules.className = "flex-1 py-2.5 text-sm font-bold rounded-lg text-amber-400 bg-slate-900/90 border border-slate-800 shadow transition-all duration-200 flex justify-center items-center gap-2 cursor-pointer";
+                tabTable.className = "flex-1 py-2.5 text-sm font-medium rounded-lg text-slate-400 hover:text-white transition-all duration-200 flex justify-center items-center gap-2 cursor-pointer";
+                pageRules.classList.remove('hidden');
+                pageTable.classList.add('hidden');
+            }
+        }
+
+        tabTable.addEventListener('click', () => switchTab('table'));
+        tabRules.addEventListener('click', () => switchTab('rules'));
+
+        // ==================== 多選過濾系統核心機制 ====================
+        let activeFilters = new Set(); // 使用 Set 來儲存多選地貌 key，如果為空則代表「全部地貌」
+        const filterStatus = document.getElementById('filter-status');
+        const searchInput = document.getElementById('search-input');
+        const simTerrainSelect = document.getElementById('sim-terrain');
+        const simLevelSelect = document.getElementById('sim-level');
+        const simModifierInput = document.getElementById('sim-modifier');
+        const skillContainer = document.getElementById('skill-selector-container');
+        const btnRollCheck = document.getElementById('btn-roll-check');
+        const checkResultPanel = document.getElementById('check-result-panel');
+
+        // 渲染 22 個完全分拆之獨立地貌過濾按鈕 (Pills)
+        const filterContainer = document.getElementById('terrain-filter-pills');
+        biomesList.forEach(b => {
+            const btn = document.createElement('button');
+            btn.setAttribute('data-filter', b.key);
+            btn.className = "filter-pill px-2.5 py-1 text-xs font-semibold rounded-lg border bg-slate-950 border-slate-850 text-slate-450 hover:border-slate-700 transition-all cursor-pointer whitespace-nowrap";
+            btn.innerHTML = b.label;
+            
+            // 預設 'all' (全部地貌) 亮起
+            if (b.key === 'all') {
+                btn.className = `filter-pill px-2.5 py-1 text-xs font-semibold rounded-lg border ${b.style} transition-all cursor-pointer whitespace-nowrap`;
+            }
+            
+            btn.onclick = () => {
+                toggleFilter(b.key);
+            };
+            filterContainer.appendChild(btn);
+        });
+
+        // 多選切換邏輯
+        function toggleFilter(filterKey) {
+            if (filterKey === 'all') {
+                // 如果點選「全部地貌」，則清空其他複選條件
+                activeFilters.clear();
+            } else {
+                // 如果是其他具體地貌，進行 Toggle 切換
+                if (activeFilters.has(filterKey)) {
+                    activeFilters.delete(filterKey);
+                } else {
+                    activeFilters.add(filterKey);
+                }
+            }
+            
+            // 重新繪製過濾按鈕 UI 高亮狀態
+            updateFilterButtonsUI();
+            // 執行資料與選單連動篩選
+            applyTerrainFilters();
+        }
+
+        // 繪製多選高亮按鈕樣式
+        function updateFilterButtonsUI() {
+            document.querySelectorAll('.filter-pill').forEach(btn => {
+                const key = btn.getAttribute('data-filter');
+                const bInfo = biomesList.find(x => x.key === key);
+                if (!bInfo) return;
+
+                if (key === 'all') {
+                    if (activeFilters.size === 0) {
+                        btn.className = `filter-pill px-2.5 py-1 text-xs font-semibold rounded-lg border ${bInfo.style} transition-all cursor-pointer whitespace-nowrap`;
+                    } else {
+                        btn.className = "filter-pill px-2.5 py-1 text-xs font-semibold rounded-lg border bg-slate-950 border-slate-850 text-slate-450 hover:border-slate-700 transition-all cursor-pointer whitespace-nowrap";
+                    }
+                } else {
+                    if (activeFilters.has(key)) {
+                        btn.className = `filter-pill px-2.5 py-1 text-xs font-semibold rounded-lg border ${bInfo.style} transition-all cursor-pointer whitespace-nowrap`;
+                    } else {
+                        btn.className = "filter-pill px-2.5 py-1 text-xs font-semibold rounded-lg border bg-slate-950 border-slate-850 text-slate-450 hover:border-slate-700 transition-all cursor-pointer whitespace-nowrap";
+                    }
+                }
+            });
+        }
+
+        // 同時過濾右側對照表與連動過濾左側控制台下拉選單
+        function applyTerrainFilters() {
+            const query = searchInput.value.trim().toLowerCase();
+            let visibleCount = 0;
+
+            document.querySelectorAll('.region-accordion').forEach(wrapper => {
+                const regionName = wrapper.getAttribute('data-region-name');
+                const biomes = JSON.parse(wrapper.getAttribute('data-biomes') || '[]');
+                
+                // 1. 地貌複選聯集過濾 (OR 邏輯：只要包含任何一個選中的地貌即顯示)
+                const matchesCategory = (activeFilters.size === 0 || biomes.some(b => activeFilters.has(b)));
+                
+                // 2. 搜尋欄關鍵字過濾
+                let matchesSearch = true;
+                if (query.length > 0) {
+                    let hasMatchingRow = false;
+                    wrapper.querySelectorAll('.resource-table tbody tr').forEach(row => {
+                        const itemVal = row.getAttribute('data-raw-item').toLowerCase();
+                        if (itemVal.includes(query)) {
+                            hasMatchingRow = true;
+                        }
+                    });
+                    matchesSearch = hasMatchingRow;
+                }
+
+                if (matchesCategory && matchesSearch) {
+                    wrapper.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    wrapper.classList.add('hidden');
+                }
+            });
+
+            // 連動：動態過濾左側控制台之冒險地形選單選項
+            populateTerrainDropdown();
+
+            // 更新過濾狀態標記與左側控制台同步指示器
+            const leftStatusBadge = document.getElementById('terrain-filter-status-left');
+            if (activeFilters.size === 0) {
+                filterStatus.textContent = `顯示全部 ${visibleCount} 個地形`;
+                leftStatusBadge.textContent = `全地形`;
+                leftStatusBadge.className = "text-[10px] text-slate-400 font-medium bg-slate-950/40 px-1.5 py-0.2 rounded border border-slate-800/30";
+            } else {
+                const selectedLabels = Array.from(activeFilters).map(k => {
+                    const item = biomesList.find(x => x.key === k);
+                    return item ? item.label.split(' ')[1] : k;
+                });
+                
+                filterStatus.textContent = `篩選 [${selectedLabels.join(' + ')}]：共 ${visibleCount} 個地形符合條件`;
+                leftStatusBadge.textContent = `已過濾: ${selectedLabels.join('+')}`;
+                leftStatusBadge.className = "text-[10px] text-indigo-400 font-semibold bg-indigo-950/40 px-1.5 py-0.2 rounded border border-indigo-900/50 animate-pulse";
+            }
+        }
+
+        // 動態重建左側 dropdown，僅保留符合當前地貌篩選的地形
+        function populateTerrainDropdown() {
+            const currentSelectedName = activeTerrain ? activeTerrain.name : null;
+            simTerrainSelect.innerHTML = '';
+            
+            let matchedIndexToRestore = null;
+            let firstAvailableIdx = null;
+
+            terrainData.forEach((t, idx) => {
+                const biomes = getBiomesForTerrain(t.name);
+                const matches = (activeFilters.size === 0 || biomes.some(b => activeFilters.has(b)));
+                
+                if (matches) {
+                    const opt = document.createElement('option');
+                    opt.value = idx;
+                    opt.textContent = t.name;
+                    simTerrainSelect.appendChild(opt);
+
+                    if (firstAvailableIdx === null) {
+                        firstAvailableIdx = idx;
+                    }
+                    if (currentSelectedName && t.name === currentSelectedName) {
+                        matchedIndexToRestore = idx;
+                    }
+                }
+            });
+
+            // 保持選擇，或在超出過濾範圍時自動切換至新篩選條件下的首個地形
+            if (matchedIndexToRestore !== null) {
+                simTerrainSelect.value = matchedIndexToRestore;
+            } else if (firstAvailableIdx !== null) {
+                simTerrainSelect.value = firstAvailableIdx;
+                syncTerrain(firstAvailableIdx);
+            }
+        }
+    </script>
+
+    <script>
+        // ==================== 全局搜索與高亮檢索 ====================
+        const clearSearchBtn = document.getElementById('clear-search');
+        const btnExpandAll = document.getElementById('btn-expand-all');
+        const btnCollapseAll = document.getElementById('btn-collapse-all');
+
+        const expandAll = () => {
+            document.querySelectorAll('.region-accordion > .accordion-header').forEach(h => {
+                if (!h.classList.contains('open')) {
+                    h.classList.add('open');
+                    h.classList.remove('bg-slate-900', 'border-slate-800');
+                    h.classList.add('bg-indigo-950/60', 'border-indigo-500/50');
+                    h.nextElementSibling.classList.add('open');
+                }
+            });
+            document.querySelectorAll('.level-accordion-header').forEach(lh => {
+                if (!lh.classList.contains('open')) {
+                    lh.classList.add('open');
+                    lh.classList.remove('bg-slate-700/50', 'border-slate-850');
+                    lh.classList.add('bg-indigo-900/40', 'border-indigo-500/50');
+                    lh.nextElementSibling.classList.add('open');
+                }
+            });
+        };
+
+        const collapseAll = () => {
+            document.querySelectorAll('.level-accordion-header.open').forEach(lh => {
+                lh.classList.remove('open');
+                lh.classList.remove('bg-indigo-900/40', 'border-indigo-500/50');
+                lh.classList.add('bg-slate-700/50', 'border-slate-850');
+                lh.nextElementSibling.classList.remove('open');
+            });
+            document.querySelectorAll('.region-accordion > .accordion-header.open').forEach(h => {
+                h.classList.remove('open');
+                h.classList.remove('bg-indigo-950/60', 'border-indigo-500/50');
+                h.classList.add('bg-slate-900', 'border-slate-800');
+                h.nextElementSibling.classList.remove('open');
+            });
+        };
+
+        btnExpandAll.addEventListener('click', expandAll);
+        btnCollapseAll.addEventListener('click', collapseAll);
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim().toLowerCase();
+            
+            if (query.length > 0) {
+                clearSearchBtn.classList.remove('hidden');
+            } else {
+                clearSearchBtn.classList.add('hidden');
+                resetSearchHighlighting();
+                applyTerrainFilters(); 
+                return;
+            }
+
+            let matchCount = 0;
+            const matchedLevels = [];
+            const matchedRegions = [];
+
+            document.querySelectorAll('.resource-table tbody tr').forEach(row => {
+                const itemValue = row.getAttribute('data-raw-item').toLowerCase();
+                const cell = row.querySelector('.item-cell');
+                
+                if (itemValue.includes(query)) {
+                    row.classList.add('search-highlight');
+                    const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+                    cell.innerHTML = row.getAttribute('data-raw-item').replace(regex, '<span class="highlight-text">$1</span>');
+                    
+                    matchCount++;
+
+                    const levelAcc = row.closest('.level-accordion');
+                    const regionAcc = row.closest('.region-accordion');
+                    if (levelAcc && !matchedLevels.includes(levelAcc)) matchedLevels.push(levelAcc);
+                    if (regionAcc && !matchedRegions.includes(regionAcc)) matchedRegions.push(regionAcc);
+                } else {
+                    row.classList.remove('search-highlight');
+                    cell.textContent = row.getAttribute('data-raw-item');
+                }
+            });
+
+            applyTerrainFilters();
+
+            if (matchCount > 0) {
+                matchedRegions.forEach(reg => {
+                    const h = reg.querySelector('.accordion-header');
+                    const c = h.nextElementSibling;
+                    if (!h.classList.contains('open')) {
+                        h.classList.add('open');
+                        h.classList.remove('bg-slate-900', 'border-slate-800');
+                        h.classList.add('bg-indigo-950/60', 'border-indigo-500/50');
+                        c.classList.add('open');
+                    }
+                });
+
+                matchedLevels.forEach(lvl => {
+                    const lh = lvl.querySelector('.level-accordion-header');
+                    const lc = lh.nextElementSibling;
+                    if (!lh.classList.contains('open')) {
+                        lh.classList.add('open');
+                        lh.classList.remove('bg-slate-700/50', 'border-slate-850');
+                        lh.classList.add('bg-indigo-900/40', 'border-indigo-500/50');
+                        lc.classList.add('open');
+                    }
+                });
+            }
+        });
+
+        const clearSearch = () => {
+            searchInput.value = '';
+            clearSearchBtn.classList.add('hidden');
+            resetSearchHighlighting();
+            applyTerrainFilters();
+            collapseAll();
+        };
+
+        clearSearchBtn.addEventListener('click', clearSearch);
+
+        function resetSearchHighlighting() {
+            document.querySelectorAll('.resource-table tbody tr').forEach(row => {
+                row.classList.remove('search-highlight');
+                const cell = row.querySelector('.item-cell');
+                cell.textContent = row.getAttribute('data-raw-item');
+            });
+        }
+
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+    </script>
+
+    <script>
+        // ==================== 模擬控制台 D20 檢定系統 ====================
+        let activeTerrain = null;
+        let activeLevelObj = null;
+        let activeSkillKey = 'survival';
+        let checkOutcome = null; 
+        let rewardsRemaining = 0;
+        let lastRolledItemName = ""; 
+        let rescueTierIndex = -1; // 追蹤備用挽救下修等級之索引位置
+
+        let rollMode = 'normal';
+        const modeNormalBtn = document.getElementById('roll-mode-normal');
+        const modeAdvBtn = document.getElementById('roll-mode-advantage');
+        const modeDisBtn = document.getElementById('roll-mode-disadvantage');
+
+        function updateRollModeUI() {
+            [modeNormalBtn, modeAdvBtn, modeDisBtn].forEach(btn => {
+                btn.className = "py-1.5 text-xs font-bold rounded-lg border bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700 transition-all flex items-center justify-center gap-1 cursor-pointer";
+            });
+            if (rollMode === 'normal') {
+                modeNormalBtn.className = "py-1.5 text-xs font-bold rounded-lg border bg-indigo-600/30 border-indigo-500 text-indigo-200 ring-1 ring-indigo-500/30 transition-all flex items-center justify-center gap-1 cursor-pointer";
+            } else if (rollMode === 'advantage') {
+                modeAdvBtn.className = "py-1.5 text-xs font-bold rounded-lg border bg-emerald-600/30 border-emerald-500 text-emerald-200 ring-1 ring-emerald-500/30 transition-all flex items-center justify-center gap-1 cursor-pointer";
+            } else if (rollMode === 'disadvantage') {
+                modeDisBtn.className = "py-1.5 text-xs font-bold rounded-lg border bg-rose-600/30 border-rose-500 text-rose-200 ring-1 ring-rose-500/30 transition-all flex items-center justify-center gap-1 cursor-pointer";
+            }
+        }
+
+        modeNormalBtn.onclick = () => { rollMode = 'normal'; updateRollModeUI(); };
+        modeAdvBtn.onclick = () => { rollMode = 'advantage'; updateRollModeUI(); };
+        modeDisBtn.onclick = () => { rollMode = 'disadvantage'; updateRollModeUI(); };
+
+        function initSimulator() {
+            simTerrainSelect.innerHTML = '';
+            terrainData.forEach((t, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = t.name;
+                simTerrainSelect.appendChild(opt);
+            });
+
+            simTerrainSelect.addEventListener('change', () => syncTerrain(parseInt(simTerrainSelect.value)));
+            simLevelSelect.addEventListener('change', () => syncLevel(simLevelSelect.value));
+
+            syncTerrain(0);
+            applyTerrainFilters();
+        }
+
+        function syncTerrain(index) {
+            activeTerrain = terrainData[index];
+            
+            simLevelSelect.innerHTML = '';
+            activeTerrain.levels.forEach(lvl => {
+                const opt = document.createElement('option');
+                opt.value = lvl.playerLevel;
+                opt.textContent = `等級 ${lvl.playerLevel}`;
+                simLevelSelect.appendChild(opt);
+            });
+
+            syncLevel(activeTerrain.levels[0].playerLevel);
+        }
+
+        function syncLevel(levelStr) {
+            activeLevelObj = activeTerrain.levels.find(l => l.playerLevel === levelStr);
+            renderSkillSelectors();
+            resetRollPanel();
+        }
+
+        function adjustMod(amount) {
+            let val = parseInt(simModifierInput.value) || 0;
+            simModifierInput.value = val + amount;
+        }
+
+        function renderSkillSelectors() {
+            skillContainer.innerHTML = '';
+            const skillDetails = [
+                { key: 'survival', name: '求生 (Survival)', icon: '🌲', dc: activeTerrain.skills.survival },
+                { key: 'observation', name: '觀察 (Perception)', icon: '👁️', dc: activeTerrain.skills.observation },
+                { key: 'nature', name: '自然 (Nature)', icon: '🍀', dc: activeTerrain.skills.nature }
+            ];
+
+            skillDetails.forEach(s => {
+                const isActive = activeSkillKey === s.key;
+                const card = document.createElement('button');
+                card.className = `p-2 flex flex-col items-center border rounded-lg transition-all text-center cursor-pointer ${
+                    isActive 
+                    ? 'bg-indigo-600/30 border-indigo-500 text-indigo-200 ring-1 ring-indigo-500/30' 
+                    : 'bg-slate-950 border-slate-800 hover:border-slate-700 text-slate-500'
+                }`;
+                card.innerHTML = `
+                    <span class="text-sm mb-0.5">${s.icon}</span>
+                    <span class="text-[10px] font-bold block truncate w-full">${s.name}</span>
+                    <span class="text-xs font-bold mt-1 text-slate-200">DC ${s.dc}</span>
+                `;
+                card.onclick = () => {
+                    activeSkillKey = s.key;
+                    renderSkillSelectors();
+                };
+                skillContainer.appendChild(card);
+            });
+        }
+
+        btnRollCheck.onclick = () => {
+            const diceVisual = document.getElementById('d20-dice-visual');
+            checkResultPanel.classList.remove('hidden');
+            diceVisual.classList.add('dice-rolling');
+            
+            document.getElementById('coordinate-roll-section').classList.add('hidden');
+            document.getElementById('failure-rescue-section').classList.add('hidden');
+
+            let rollsCount = 0;
+            const interval = setInterval(() => {
+                diceVisual.textContent = Math.floor(Math.random() * 20) + 1;
+                rollsCount++;
+                if (rollsCount > 10) {
+                    clearInterval(interval);
+                    diceVisual.classList.remove('dice-rolling');
+                    resolveCheck();
+                }
+            }, 60);
+        };
+
+        function resolveCheck() {
+            const d20_1 = Math.floor(Math.random() * 20) + 1;
+            const d20_2 = Math.floor(Math.random() * 20) + 1;
+            let d20 = d20_1;
+            let formulaNote = "";
+
+            if (rollMode === 'advantage') {
+                d20 = Math.max(d20_1, d20_2);
+                formulaNote = `優勢 [${d20_1}, ${d20_2}] ➔ ${d20}`;
+            } else if (rollMode === 'disadvantage') {
+                d20 = Math.min(d20_1, d20_2);
+                formulaNote = `劣勢 [${d20_1}, ${d20_2}] ➔ ${d20}`;
+            } else {
+                formulaNote = `1d20 (${d20})`;
+            }
+
+            const mod = parseInt(simModifierInput.value) || 0;
+            const total = d20 + mod;
+            const targetDC = activeTerrain.skills[activeSkillKey];
+
+            const diceVisual = document.getElementById('d20-dice-visual');
+            const formulaText = document.getElementById('check-formula-text');
+            const descText = document.getElementById('check-desc-text');
+            const badge = document.getElementById('check-status-badge');
+
+            diceVisual.textContent = d20;
+            formulaText.innerHTML = `<span class="text-indigo-400 font-bold">${formulaNote}</span> + <span class="text-purple-400">${mod}</span> = <span class="text-white text-base">${total}</span>`;
+
+            if (total >= targetDC) {
+                rewardsRemaining = 1;
+                checkOutcome = 'success';
+                badge.className = 'px-2 py-0.5 text-[10px] font-bold rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                
+                if (total >= 20) {
+                    rewardsRemaining = 2;
+                    checkOutcome = 'crit_success';
+                    badge.textContent = '大成功 (Critical!)';
+                    descText.textContent = `成果豐碩！檢定大於或等於20，您可獲得 2 次採集機會。`;
+                } else {
+                    badge.textContent = '成功 (Success)';
+                    descText.textContent = `成功通過檢定，您獲得 1 次採集機會！`;
+                }
+
+                document.getElementById('coordinate-roll-section').classList.remove('hidden');
+                updateCoordinateRollButtonText();
+
+            } else {
+                checkOutcome = 'fail';
+                badge.className = 'px-2 py-0.5 text-[10px] font-bold rounded bg-rose-500/20 text-rose-400 border border-rose-500/30';
+                badge.textContent = '失敗 (Failed)';
+                descText.textContent = `未達 DC ${targetDC}。等級表自動下修一階，請使用備用技能進行挽救挑戰。`;
+
+                // 初始化備用挽救階梯下修 index
+                const selectedIdx = activeTerrain.levels.findIndex(l => l.playerLevel === activeLevelObj.playerLevel);
+                if (selectedIdx > 0) {
+                    rescueTierIndex = selectedIdx - 1; // 自動下修一階
+                } else {
+                    rescueTierIndex = 0; // 已經是最初階，無法再下修，只能在最初階進行最終挽救
+                }
+                initiateRescueCheck();
+            }
+        }
+    </script>
+
+    <script>
+        // ==================== 備用技能級級下修（階梯式挽救）機制 ====================
+        const rescueCategorySelect = document.getElementById('rescue-category');
+        const rescueSkillTip = document.getElementById('rescue-skill-tip');
+        const rescueDcTip = document.getElementById('rescue-dc-tip');
+        const btnRollRescue = document.getElementById('btn-roll-rescue');
+        const rescueModifier = document.getElementById('rescue-modifier');
+
+        function initiateRescueCheck() {
+            const levelObj = activeTerrain.levels[rescueTierIndex];
+            const headline = document.getElementById('rescue-headline');
+            const instructions = document.getElementById('rescue-instructions');
+
+            document.getElementById('failure-rescue-section').classList.remove('hidden');
+
+            const selectedIdx = activeTerrain.levels.findIndex(l => l.playerLevel === activeLevelObj.playerLevel);
+            const isOriginalLowest = (selectedIdx === 0);
+
+            if (isOriginalLowest) {
+                headline.textContent = "最後掙扎：最初階備用技能挽救！";
+                instructions.innerHTML = `
+                    您的主動檢定已失敗。因您身處<b>最初階（等級 ${levelObj.playerLevel}）</b>，今日已無法繼續下修。<br>
+                    此為您最後一次取得材料的機會！若此挽救檢定亦失敗，將直接觸發<b>特殊命運與隨機遭遇！</b>
+                `;
+            } else {
+                const stepCount = selectedIdx - rescueTierIndex;
+                const isCurrentlyLowest = (rescueTierIndex === 0);
+
+                if (isCurrentlyLowest) {
+                    headline.textContent = `終極挽救：最初階備用技能 (等級 ${levelObj.playerLevel})`;
+                    instructions.innerHTML = `
+                        備用檢定再次失敗。您已下修至<b>最初階（等級 ${levelObj.playerLevel}）</b>，今日已無法再退！<br>
+                        這是您最後的挽救機會。若再次失敗，將直接觸發<b>極限下修命運與隨機劇情！</b>
+                    `;
+                } else {
+                    headline.textContent = `備用技能挽救 (下修第 ${stepCount} 階：等級 ${levelObj.playerLevel})`;
+                    instructions.innerHTML = `
+                        檢定未達標。系統已自動將對照表面板下修至 <b>[等級 ${levelObj.playerLevel}]</b>。<br>
+                        若此備用技能挽救檢定不幸失敗，將<b>繼續向下一階級下修挑戰</b>，直到最初階為止！
+                    `;
+                }
+            }
+
+            syncRescueOptionsForTier(levelObj);
+        }
+
+        function syncRescueOptionsForTier(levelObj) {
+            rescueCategorySelect.innerHTML = '';
+            
+            if (levelObj && levelObj.resources) {
+                Object.keys(levelObj.resources).forEach(resHeader => {
+                    const catKey = getCategoryKey(resHeader);
+                    const rule = backupSkillRules[catKey];
+                    if (rule) {
+                        const opt = document.createElement('option');
+                        opt.value = catKey;
+                        const dcMatch = resHeader.match(/DC\s*(\d+)/i);
+                        const dc = dcMatch ? dcMatch[1] : 10;
+                        opt.setAttribute('data-col-dc', dc);
+                        opt.textContent = `${rule.label} (DC ${dc})`;
+                        rescueCategorySelect.appendChild(opt);
+                    }
+                });
+            }
+
+            rescueCategorySelect.onchange = () => {
+                const selectedCat = rescueCategorySelect.value;
+                const rule = backupSkillRules[selectedCat];
+                const activeOpt = rescueCategorySelect.options[rescueCategorySelect.selectedIndex];
+                const dc = activeOpt ? activeOpt.getAttribute('data-col-dc') : 10;
+
+                rescueSkillTip.textContent = rule.skill;
+                rescueDcTip.textContent = dc;
+            };
+
+            if (rescueCategorySelect.options.length > 0) {
+                rescueCategorySelect.onchange();
+            }
+        }
+
+        btnRollRescue.onclick = () => {
+            const selectedCat = rescueCategorySelect.value;
+            const activeOpt = rescueCategorySelect.options[rescueCategorySelect.selectedIndex];
+            const targetDC = parseInt(activeOpt.getAttribute('data-col-dc')) || 10;
+            const mod = parseInt(rescueModifier.value) || 0;
+            
+            const d20 = Math.floor(Math.random() * 20) + 1;
+            const total = d20 + mod;
+
+            const levelObj = activeTerrain.levels[rescueTierIndex];
+
+            if (total >= targetDC) {
+                showBackpackToast(`🎉 挽救檢定成功！d20(${d20}) + ${mod} = ${total} >= DC ${targetDC}。`);
+                
+                diceXVal.textContent = "下修";
+                let yRolls = 0;
+                const intervalY = setInterval(() => {
+                    diceYVal.textContent = Math.floor(Math.random() * 6) + 1;
+                    yRolls++;
+                    if (yRolls > 10) {
+                        clearInterval(intervalY);
+                        executeHarvestForRescue(selectedCat, levelObj.playerLevel);
+                    }
+                }, 50);
+            } else {
+                // 備用技能挽救檢定失敗
+                if (rescueTierIndex > 0) {
+                    // 繼續向下一個階級挑戰
+                    rescueTierIndex--;
+                    showBackpackToast(`💥 挽救檢定失敗！系統再次自動下修至 [等級 ${activeTerrain.levels[rescueTierIndex].playerLevel}]！`);
+                    initiateRescueCheck(); // 刷新 UI 與 DC
+                } else {
+                    // 最初階也失敗了，退無可退，觸發命運大失敗彈窗
+                    openFailureModal(d20, mod, total, targetDC);
+                    document.getElementById('failure-rescue-section').classList.add('hidden');
+                }
+            }
+        };
+
+        function resetRollPanel() {
+            checkResultPanel.classList.add('hidden');
+            document.getElementById('coordinate-roll-section').classList.add('hidden');
+            document.getElementById('failure-rescue-section').classList.add('hidden');
+            rewardsRemaining = 0;
+            rescueTierIndex = -1;
+        }
+    </script>
+
+    <script>
+        // ==================== X-Y 軸座標骰與高精跳轉定位 ====================
+        const btnRollCoordinates = document.getElementById('btn-roll-coordinates');
+        const diceXVal = document.getElementById('dice-x-val');
+        const diceYVal = document.getElementById('dice-y-val');
+
+        function updateCoordinateRollButtonText() {
+            btnRollCoordinates.textContent = `🔮 投擲 X & Y 定位材料 (剩餘 ${rewardsRemaining} 次)`;
+        }
+
+        btnRollCoordinates.onclick = () => {
+            if (rewardsRemaining <= 0) return;
+
+            const maxValX = activeTerrain.diceType === 'd6' ? 6 : 10;
+            
+            let rollingCount = 0;
+            const rollInterval = setInterval(() => {
+                diceXVal.textContent = Math.floor(Math.random() * maxValX) + 1;
+                diceYVal.textContent = Math.floor(Math.random() * 6) + 1;
+                rollingCount++;
+                if (rollingCount > 12) {
+                    clearInterval(rollInterval);
+                    executeHarvest(maxValX);
+                }
+            }, 50);
+        };
+
+        function executeHarvest(maxValX) {
+            let finalX = parseInt(diceXVal.textContent);
+            let finalY = parseInt(diceYVal.textContent);
+
+            let chosenCategory = null;
+            if (activeTerrain.diceType === 'd6') {
+                const d6Categories = ['bone', 'fish', 'insect', 'mining', 'mushroom', 'plant'];
+                chosenCategory = d6Categories[finalX - 1];
+            } else {
+                if (activeTerrain.name.includes('沙丘') || activeTerrain.name.includes('開闊海域') || activeTerrain.name.includes('Dunes') || activeTerrain.name.includes('Ocean')) {
+                    if (finalX <= 2) chosenCategory = 'bone';
+                    else if (finalX <= 4) chosenCategory = 'fish';
+                    else if (finalX <= 6) chosenCategory = 'insect';
+                    else if (finalX <= 8) chosenCategory = 'mining';
+                    else chosenCategory = 'plant';
+                } else {
+                    if (finalX <= 2) chosenCategory = 'bone';
+                    else if (finalX <= 4) chosenCategory = 'insect';
+                    else if (finalX <= 6) chosenCategory = 'mining';
+                    else if (finalX <= 8) chosenCategory = 'mushroom';
+                    else chosenCategory = 'plant';
+                }
+            }
+
+            let checkLevelRange = activeLevelObj.playerLevel;
+
+            // 先切換回「對照表」頁籤
+            switchTab('table');
+
+            // 防呆保護：若當前地貌篩選器遮蔽了此地形，自動重設為全地貌，防止玩家看不到定位高亮
+            const targetRegionBiomes = getBiomesForTerrain(activeTerrain.name);
+            if (activeFilters.size > 0 && !targetRegionBiomes.some(b => activeFilters.has(b))) {
+                activeFilters.clear();
+                updateFilterButtonsUI();
+                applyTerrainFilters();
+            }
+
+            // 於 HTML 中尋找並定位對應列
+            const targetRow = document.querySelector(`tr[data-region-name="${activeTerrain.name}"][data-level-range="${checkLevelRange}"][data-category-key="${chosenCategory}"][data-dice-y="${finalY}"]`);
+
+            if (targetRow) {
+                // 自動開啟父摺疊面板
+                const regionHeader = targetRow.closest('.region-accordion').querySelector('.accordion-header');
+                const regionContent = regionHeader.nextElementSibling;
+                if (!regionHeader.classList.contains('open')) {
+                    toggleAccordion(regionHeader, regionContent, false);
+                }
+
+                const levelHeader = targetRow.closest('.level-accordion').querySelector('.level-accordion-header');
+                const levelContent = levelHeader.nextElementSibling;
+                if (!levelHeader.classList.contains('open')) {
+                    toggleAccordion(levelHeader, levelContent, true);
+                }
+
+                // 移除所有舊高亮
+                document.querySelectorAll('.resource-table tbody tr').forEach(r => r.classList.remove('highlight-row'));
+                targetRow.classList.add('highlight-row');
+                
+                // 動態加上提示文字
+                const cell = targetRow.querySelector('.item-cell');
+                const originalText = targetRow.getAttribute('data-raw-item');
+                cell.innerHTML = `${originalText} <span class="ml-2 px-1.5 py-0.5 bg-amber-500 text-slate-950 font-extrabold text-[10px] rounded animate-pulse shadow-glow">✦ 定位採集點</span>`;
+
+                // 延遲 350ms 避開手風琴動畫高度阻尼偏移
+                setTimeout(() => {
+                    targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 350);
+
+                lastRolledItemName = originalText;
+
+                // 喚起彈出式素材聚焦卡片
+                openHarvestModal(originalText, checkLevelRange, chosenCategory, finalX, finalY, false);
+
+                // 還原高亮
+                setTimeout(() => {
+                    targetRow.classList.remove('highlight-row');
+                    cell.textContent = originalText;
+                }, 6000);
+
+            } else {
+                showBackpackToast(`無法在 ${activeTerrain.name} ${checkLevelRange} 找到對應分類表。請聯絡 DM 判定！`);
+            }
+
+            rewardsRemaining--;
+            updateCoordinateRollButtonText();
+            if (rewardsRemaining <= 0) {
+                document.getElementById('coordinate-roll-section').classList.add('hidden');
+            }
+        }
+
+        function executeHarvestForRescue(forceCategory, checkLevelRange) {
+            let finalY = parseInt(diceYVal.textContent);
+
+            // 先切換回「對照表」頁籤
+            switchTab('table');
+
+            // 防呆保護
+            const targetRegionBiomes = getBiomesForTerrain(activeTerrain.name);
+            if (activeFilters.size > 0 && !targetRegionBiomes.some(b => activeFilters.has(b))) {
+                activeFilters.clear();
+                updateFilterButtonsUI();
+                applyTerrainFilters();
+            }
+
+            // 於 HTML 中尋找並定位對應列
+            const targetRow = document.querySelector(`tr[data-region-name="${activeTerrain.name}"][data-level-range="${checkLevelRange}"][data-category-key="${forceCategory}"][data-dice-y="${finalY}"]`);
+
+            if (targetRow) {
+                // 自動開啟父摺疊面板
+                const regionHeader = targetRow.closest('.region-accordion').querySelector('.accordion-header');
+                const regionContent = regionHeader.nextElementSibling;
+                if (!regionHeader.classList.contains('open')) {
+                    toggleAccordion(regionHeader, regionContent, false);
+                }
+
+                const levelHeader = targetRow.closest('.level-accordion').querySelector('.level-accordion-header');
+                const levelContent = levelHeader.nextElementSibling;
+                if (!levelHeader.classList.contains('open')) {
+                    toggleAccordion(levelHeader, levelContent, true);
+                }
+
+                // 移除所有舊高亮
+                document.querySelectorAll('.resource-table tbody tr').forEach(r => r.classList.remove('highlight-row'));
+                targetRow.classList.add('highlight-row');
+                
+                // 動態加上提示文字
+                const cell = targetRow.querySelector('.item-cell');
+                const originalText = targetRow.getAttribute('data-raw-item');
+                cell.innerHTML = `${originalText} <span class="ml-2 px-1.5 py-0.5 bg-amber-500 text-slate-950 font-extrabold text-[10px] rounded animate-pulse shadow-glow">✦ 定位採集點</span>`;
+
+                // 延遲 350ms 避開手風琴動畫高度阻尼偏移
+                setTimeout(() => {
+                    targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 350);
+
+                lastRolledItemName = originalText;
+
+                // 喚起彈出式素材聚焦卡片 (標記為 isRescue = true)
+                openHarvestModal(originalText, checkLevelRange, forceCategory, "備用", finalY, true);
+
+                // 還原高亮
+                setTimeout(() => {
+                    targetRow.classList.remove('highlight-row');
+                    cell.textContent = originalText;
+                }, 6000);
+
+            } else {
+                showBackpackToast(`無法在 ${activeTerrain.name} ${checkLevelRange} 找到對應分類表。請聯絡 DM 判定！`);
+            }
+
+            document.getElementById('failure-rescue-section').classList.add('hidden');
+        }
+    </script>
+
+    <script>
+        // ==================== 收獲與失敗彈出控制 ====================
+        const hModal = document.getElementById('harvest-modal');
+        const modalCoordinateTitle = document.getElementById('modal-coordinate-title');
+        const modalItemName = document.getElementById('modal-item-name');
+        const modalItemSub = document.getElementById('modal-item-sub');
+        const modalTerrain = document.getElementById('modal-terrain');
+        const modalLevel = document.getElementById('modal-level');
+        const modalCategory = document.getElementById('modal-category');
+        const modalBtnPack = document.getElementById('modal-btn-pack');
+        const modalBtnClose = document.getElementById('modal-btn-close');
+
+        const fModal = document.getElementById('failure-modal');
+
+        function openHarvestModal(rawItemText, levelStr, categoryKey, xVal, yVal, isRescue) {
+            let chName = rawItemText;
+            let enName = "";
+            const matchBracket = rawItemText.match(/(.+?)\s*\((.+?)\)/);
+            if (matchBracket) {
+                chName = matchBracket[1];
+                enName = matchBracket[2];
+            }
+
+            modalCoordinateTitle.textContent = isRescue ? `[ 備用挽救檢定成功定位 ]` : `X座標 (欄位): ${xVal} | Y座標 (1d6): ${yVal}`;
+            modalItemName.textContent = chName;
+            modalItemSub.textContent = enName;
+            modalTerrain.textContent = activeTerrain.name;
+            modalLevel.textContent = isRescue ? `等級 ${levelStr} (下修等級)` : `等級 ${levelStr}`;
+            
+            const categoryNames = {
+                bone: '🦴 骸骨/骨堆 (Bonepile)',
+                fish: '🐟 魚類 (Fish)',
+                insect: '🪲 昆蟲 (Insect)',
+                mining: '💎 礦物/礦石 (Mining)',
+                mushroom: '🍄 菇類 (Mushrooms)',
+                plant: '🌱 植物 (Plants)'
+            };
+            modalCategory.textContent = categoryNames[categoryKey] || '未知資源';
+
+            hModal.classList.remove('hidden');
+            hModal.classList.remove('pointer-events-none');
+            setTimeout(() => {
+                hModal.classList.remove('opacity-0');
+                hModal.querySelector('.transform').classList.remove('scale-90');
+                hModal.querySelector('.transform').classList.add('scale-100');
+            }, 50);
+        }
+
+        function closeHarvestModal() {
+            hModal.classList.add('opacity-0');
+            hModal.querySelector('.transform').classList.remove('scale-100');
+            hModal.querySelector('.transform').classList.add('scale-90');
+            setTimeout(() => {
+                hModal.classList.add('hidden');
+                hModal.classList.add('pointer-events-none');
+            }, 300);
+        }
+
+        modalBtnPack.onclick = () => {
+            addToBackpack(lastRolledItemName);
+            closeHarvestModal();
+        };
+
+        modalBtnClose.onclick = () => {
+            closeHarvestModal();
+        };
+
+        // 徹底失敗彈窗邏輯
+        function openFailureModal(d20, mod, total, dc) {
+            const resultEl = document.getElementById('failure-modal-result');
+            const subEl = document.getElementById('failure-modal-sub');
+            const terrainEl = document.getElementById('failure-modal-terrain');
+            
+            resultEl.innerHTML = `d20(${d20}) + ${mod} = <span class="text-rose-400 text-2xl font-black">${total}</span>`;
+            subEl.textContent = `挑戰大失敗 ➔ 未達 DC ${dc}`;
+            terrainEl.textContent = activeTerrain ? activeTerrain.name : "未知地形";
+            
+            fModal.classList.remove('hidden');
+            fModal.classList.remove('pointer-events-none');
+            setTimeout(() => {
+                fModal.classList.remove('opacity-0');
+                fModal.querySelector('.transform').classList.remove('scale-90');
+                fModal.querySelector('.transform').classList.add('scale-100');
+            }, 50);
+        }
+
+        function closeFailureModal() {
+            fModal.classList.add('opacity-0');
+            fModal.querySelector('.transform').classList.remove('scale-100');
+            fModal.querySelector('.transform').classList.add('scale-90');
+            setTimeout(() => {
+                fModal.classList.add('hidden');
+                fModal.classList.add('pointer-events-none');
+            }, 300);
+        }
+
+        document.getElementById('failure-btn-close').onclick = closeFailureModal;
+
+        // ==================== 採集收納背包 ====================
+        function addToBackpack(itemName) {
+            if (backpack[itemName]) {
+                backpack[itemName] += 1;
+            } else {
+                backpack[itemName] = 1;
+            }
+            renderBackpack();
+            showBackpackToast(`➕ 已將「${itemName}」放入採集背包中！`);
+        }
+
+        function renderBackpack() {
+            const listContainer = document.getElementById('backpack-list');
+            const countContainer = document.getElementById('backpack-count');
+            listContainer.innerHTML = '';
+
+            const keys = Object.keys(backpack);
+            countContainer.textContent = keys.reduce((acc, k) => acc + backpack[k], 0);
+
+            if (keys.length === 0) {
+                listContainer.innerHTML = `<p class="text-center text-slate-500 py-4">背包目前空空如也，快去模擬採集吧！</p>`;
+                return;
+            }
+
+            keys.forEach(k => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'flex justify-between items-center bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800/80 hover:border-slate-700 transition-all';
+                itemDiv.innerHTML = `
+                    <span class="text-slate-200 truncate pr-2">${k}</span>
+                    <div class="flex items-center space-x-2">
+                        <span class="px-1.5 py-0.5 bg-indigo-950 text-indigo-400 font-bold font-mono rounded text-[10px]">x${backpack[k]}</span>
+                        <button onclick="removeItem('${k}')" class="text-slate-500 hover:text-rose-400 transition-colors text-sm cursor-pointer">✖</button>
+                    </div>
+                `;
+                listContainer.appendChild(itemDiv);
+            });
+        }
+
+        function removeItem(item) {
+            if (backpack[item]) {
+                backpack[item]--;
+                if (backpack[item] <= 0) {
+                    delete backpack[item];
+                }
+            }
+            renderBackpack();
+        }
+
+        function clearBackpack() {
+            backpack = {};
+            renderBackpack();
+            showBackpackToast("🧹 採集背包已被徹底清空。");
+        }
+
+        function copyBackpack() {
+            const keys = Object.keys(backpack);
+            if (keys.length === 0) {
+                showBackpackToast("🎒 背包中尚無材料，無法生成成果報告。");
+                return;
+            }
+
+            let report = `🎒 冒險採集成果報告：\n`;
+            report += `------------------------------------\n`;
+            report += `當前地形：${activeTerrain.name}\n`;
+            report += `當前等級表：${activeLevelObj.playerLevel}\n`;
+            report += `採得素材清單：\n`;
+            keys.forEach(k => {
+                report += `- ${k} x ${backpack[k]}\n`;
+            });
+            report += `------------------------------------\n`;
+            report += `(由「地區資源採集助手」自動生成)\n`;
+
+            const tempTextarea = document.createElement('textarea');
+            tempTextarea.value = report;
+            document.body.appendChild(tempTextarea);
+            tempTextarea.select();
+            try {
+                document.execCommand('copy');
+                showBackpackToast("📋 採集報告已成功複製至剪貼簿！");
+            } catch (err) {
+                showBackpackToast("❌ 複製失敗，請手動複製。");
+            }
+            document.body.removeChild(tempTextarea);
+        }
+
+        function showBackpackToast(msg) {
+            const toast = document.getElementById('backpack-toast');
+            toast.textContent = msg;
+            toast.style.opacity = '1';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+            }, 3000);
+        }
+
+        window.onload = function() {
+            initSimulator();
+        };
+    </script>
+</body>
+</html>

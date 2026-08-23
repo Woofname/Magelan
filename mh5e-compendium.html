@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="zh-Hant" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>魔物獵人 D&D 資料百科 | MH D&D Compendium</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for RPG Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        mh: {
+                            dark: '#0f131a',
+                            panel: '#1a222d',
+                            border: '#2e3d4f',
+                            gold: '#cda250',
+                            goldLight: '#f3d289'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #0f131a;
+            background-image: radial-gradient(circle at top, #1c2735 0%, #0f131a 100%);
+            background-attachment: fixed;
+        }
+
+        .mh-title {
+            font-family: 'Cinzel', 'Noto Sans TC', serif;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f131a; }
+        ::-webkit-scrollbar-thumb { background: #2e3d4f; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #cda250; }
+    </style>
+</head>
+<body class="text-slate-200 min-h-screen pb-12">
+
+    <header class="border-b border-mh-border bg-mh-panel/90 backdrop-blur-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex items-center gap-4">
+            <div class="bg-mh-gold text-mh-dark p-2.5 rounded-lg font-black text-2xl shadow-lg border border-mh-goldLight">
+                <i class="fa-solid fa-book-journal-whills"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-black text-mh-gold tracking-wide mh-title">魔物獵人 D&D 資料百科大全</h1>
+                <p class="text-sm text-slate-400">Monster Hunter 5e - Data & Lore Compendium (Ultimate Edition)</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 mt-6">
+        
+        <!-- Tab Navigation -->
+        <nav class="flex flex-wrap gap-2 mb-6 border-b border-mh-border pb-px">
+            <button onclick="window.switchTab('weapons')" id="tab-weapons" class="tab-btn px-5 py-3 rounded-t-lg font-bold text-sm flex items-center gap-2 transition-all bg-mh-panel text-mh-gold border-t-2 border-mh-gold">
+                <i class="fa-solid fa-sword text-lg"></i> 武器與防具
+            </button>
+            <button onclick="window.switchTab('items')" id="tab-items" class="tab-btn px-5 py-3 rounded-t-lg font-bold text-sm flex items-center gap-2 transition-all text-slate-400 hover:text-slate-200 border-t-2 border-transparent">
+                <i class="fa-solid fa-flask text-lg"></i> 道具與魔法庫
+            </button>
+            <button onclick="window.switchTab('shops')" id="tab-shops" class="tab-btn px-5 py-3 rounded-t-lg font-bold text-sm flex items-center gap-2 transition-all text-slate-400 hover:text-slate-200 border-t-2 border-transparent">
+                <i class="fa-solid fa-shop text-lg"></i> 商店與市場清單
+            </button>
+            <button onclick="window.switchTab('crafting')" id="tab-crafting" class="tab-btn px-5 py-3 rounded-t-lg font-bold text-sm flex items-center gap-2 transition-all text-slate-400 hover:text-slate-200 border-t-2 border-transparent">
+                <i class="fa-solid fa-hammer text-lg"></i> 萬物調合配方表
+            </button>
+            <button onclick="window.switchTab('resources')" id="tab-resources" class="tab-btn px-5 py-3 rounded-t-lg font-bold text-sm flex items-center gap-2 transition-all text-slate-400 hover:text-slate-200 border-t-2 border-transparent">
+                <i class="fa-solid fa-compass text-lg"></i> 採集與資源一覽
+            </button>
+            <button onclick="window.switchTab('bastion')" id="tab-bastion" class="tab-btn px-5 py-3 rounded-t-lg font-bold text-sm flex items-center gap-2 transition-all text-slate-400 hover:text-slate-200 border-t-2 border-transparent">
+                <i class="fa-solid fa-chess-rook text-lg"></i> 據點與農場
+            </button>
+        </nav>
+
+        <div class="w-full">
+
+            <!-- TAB 1: WEAPONS & ARMOR -->
+            <div id="pane-weapons" class="tab-pane space-y-6">
+                <div class="bg-mh-panel border border-mh-border rounded-xl p-6 shadow-xl">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-mh-border pb-4 mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-mh-gold mh-title">⚔️ 武器與防具鍛造圖鑑 (The Smithy)</h2>
+                            <p class="text-sm text-slate-400">查詢所有獵人專屬武器特性、傷害骰與各式防具數值</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" id="gear-search" oninput="window.filterGear()" placeholder="搜尋裝備..." class="bg-mh-dark text-slate-200 border border-mh-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-mh-gold w-64">
+                            <select id="gear-type-filter" onchange="window.filterGear()" class="bg-mh-dark text-slate-200 border border-mh-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-mh-gold">
+                                <option value="all">全部裝備</option>
+                                <option value="melee">近戰武器</option>
+                                <option value="ranged">遠程武器</option>
+                                <option value="armor">防具 (Armor)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="weapons-section" class="space-y-4">
+                        <h3 class="text-lg font-bold text-slate-200 border-l-4 border-mh-gold pl-3">武器清單 (Weapons)</h3>
+                        <div id="weapons-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Dynamic -->
+                        </div>
+                    </div>
+
+                    <div id="armors-section" class="space-y-4 mt-8">
+                        <h3 class="text-lg font-bold text-slate-200 border-l-4 border-sky-400 pl-3">防具清單 (Armor)</h3>
+                        <div id="armors-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Dynamic -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 2: ITEMS DATABASE -->
+            <div id="pane-items" class="tab-pane hidden space-y-6">
+                <div class="bg-mh-panel border border-mh-border rounded-xl p-6 shadow-xl">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-mh-border pb-4 mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-mh-gold mh-title">🧪 獵人道具與魔法庫</h2>
+                            <p class="text-sm text-slate-400">完整收錄狩獵用道具、陷阱與特殊魔法藥水效果</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="text" id="item-search" oninput="window.filterItems()" placeholder="搜尋道具名稱或效果..." class="bg-mh-dark text-slate-200 border border-mh-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-mh-gold w-64">
+                            <select id="item-rarity-filter" onchange="window.filterItems()" class="bg-mh-dark text-slate-200 border border-mh-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-mh-gold">
+                                <option value="all">全部道具</option>
+                                <option value="item">狩獵道具 (Item)</option>
+                                <option value="magic">魔法物品 (Magic)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="items-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Dynamic -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: SHOPS -->
+            <div id="pane-shops" class="tab-pane hidden space-y-6">
+                <div class="bg-mh-panel border border-mh-border rounded-xl p-6 shadow-xl">
+                    <div class="flex flex-col lg:flex-row justify-between gap-4 border-b border-mh-border pb-4 mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-mh-gold mh-title">🛒 商店與市場清單</h2>
+                            <p class="text-sm text-slate-400">查詢城鎮中各大商店販售的物品價格與效果說明</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="window.selectShop('provision')" id="shop-tab-provision" class="shop-tab-btn px-4 py-2 rounded-lg bg-mh-gold text-mh-dark font-bold text-sm transition">公會補給所</button>
+                            <button onclick="window.selectShop('general')" id="shop-tab-general" class="shop-tab-btn px-4 py-2 rounded-lg bg-mh-dark hover:bg-mh-border text-slate-300 font-bold text-sm border border-mh-border transition">萬能雜貨鋪</button>
+                            <button onclick="window.selectShop('ammo')" id="shop-tab-ammo" class="shop-tab-btn px-4 py-2 rounded-lg bg-mh-dark hover:bg-mh-border text-slate-300 font-bold text-sm border border-mh-border transition">彈藥專賣商</button>
+                            <button onclick="window.selectShop('traveling')" id="shop-tab-traveling" class="shop-tab-btn px-4 py-2 rounded-lg bg-mh-dark hover:bg-mh-border text-slate-300 font-bold text-sm border border-mh-border transition">流浪商人價目表</button>
+                        </div>
+                    </div>
+
+                    <div class="bg-mh-dark/50 rounded-xl p-5 border border-mh-border">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 id="shop-title" class="text-lg font-bold text-mh-gold">公會補給所</h3>
+                                <p id="shop-desc" class="text-sm text-slate-400 mt-1">僅限公會成員購買，販售最齊全的狩獵消耗品。</p>
+                            </div>
+                            <input type="text" id="shop-item-search" oninput="window.filterShopItems()" placeholder="篩選商品..." class="bg-mh-dark text-slate-200 border border-mh-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-mh-gold w-48">
+                        </div>
+
+                        <div class="overflow-x-auto rounded-lg border border-mh-border">
+                            <table class="w-full text-left text-sm border-collapse bg-mh-panel">
+                                <thead>
+                                    <tr class="border-b border-mh-border bg-mh-dark text-slate-400 font-bold">
+                                        <th class="py-3 px-4 w-1/4">商品名稱</th>
+                                        <th class="py-3 px-4 w-24">價格</th>
+                                        <th class="py-3 px-4 w-24">重量</th>
+                                        <th class="py-3 px-4">效果說明 / 備註</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="shop-items-list" class="divide-y divide-mh-border">
+                                    <!-- Dynamic -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: CRAFTING SYSTEM -->
+            <div id="pane-crafting" class="tab-pane hidden space-y-6">
+                <div class="bg-mh-panel border border-mh-border rounded-xl p-6 shadow-xl">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-mh-border pb-4 mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-mh-gold mh-title">🛠️ 調合與煉金配方表 (Combo List)</h2>
+                            <p class="text-sm text-slate-400">總結所有的道具合成公式與難度檢定標準</p>
+                        </div>
+                        <select id="crafting-tool-filter" onchange="window.loadCraftingRecipes()" class="bg-mh-dark text-slate-200 border border-mh-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-mh-gold">
+                            <option value="Alchemist">🧪 煉金工具配方</option>
+                            <option value="Brewer">🍺 釀造工具配方</option>
+                            <option value="Cook">🍳 烹飪用具配方</option>
+                            <option value="Glassblower">🏺 吹玻璃工具</option>
+                            <option value="Herbalism">🌿 草藥包配方 (含彈藥)</option>
+                            <option value="Poisoner">☠️ 毒藥包配方</option>
+                            <option value="Smith">🔨 鐵匠工具配方</option>
+                            <option value="Tinker">⚙️ 修補工具配方</option>
+                            <option value="Woodcarver">🪓 木雕工具配方</option>
+                        </select>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-lg border border-mh-border">
+                        <table class="w-full text-left text-sm border-collapse bg-mh-panel">
+                            <thead>
+                                <tr class="border-b border-mh-border bg-mh-dark text-mh-gold font-bold">
+                                    <th class="py-3 px-4 w-1/4">成品名稱 (Result)</th>
+                                    <th class="py-3 px-4">主材料 (Item 1)</th>
+                                    <th class="py-3 px-4">副材料 (Item 2)</th>
+                                    <th class="py-3 px-4 text-center">檢定難度 (DC)</th>
+                                    <th class="py-3 px-4 text-center">產出數量 (Qty)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recipes-list" class="divide-y divide-mh-border">
+                                <!-- Dynamic -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 5: RESOURCE GATHERING -->
+            <div id="pane-resources" class="tab-pane hidden space-y-6">
+                <div class="bg-mh-panel border border-mh-border rounded-xl p-6 shadow-xl">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-mh-border pb-4 mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold text-mh-gold mh-title">🌿 野外地圖採集資料 (Resources)</h2>
+                            <p class="text-sm text-slate-400">瀏覽各環境掉落物、珍稀度與採集物效果</p>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="window.selectResourceType('bonepile')" id="gather-tab-bonepile" class="gather-tab-btn px-4 py-2 rounded-lg bg-mh-gold text-mh-dark font-bold text-sm transition">🦴 骨堆</button>
+                            <button onclick="window.selectResourceType('fish')" id="gather-tab-fish" class="gather-tab-btn px-4 py-2 rounded-lg bg-mh-dark border border-mh-border hover:bg-mh-border text-slate-300 font-bold text-sm transition">🐟 魚類</button>
+                            <button onclick="window.selectResourceType('insect')" id="gather-tab-insect" class="gather-tab-btn px-4 py-2 rounded-lg bg-mh-dark border border-mh-border hover:bg-mh-border text-slate-300 font-bold text-sm transition">🦋 昆蟲</button>
+                            <button onclick="window.selectResourceType('mineral')" id="gather-tab-mineral" class="gather-tab-btn px-4 py-2 rounded-lg bg-mh-dark border border-mh-border hover:bg-mh-border text-slate-300 font-bold text-sm transition">⛏️ 礦石</button>
+                            <button onclick="window.selectResourceType('mushroom')" id="gather-tab-mushroom" class="gather-tab-btn px-4 py-2 rounded-lg bg-mh-dark border border-mh-border hover:bg-mh-border text-slate-300 font-bold text-sm transition">🍄 菇類</button>
+                            <button onclick="window.selectResourceType('plant')" id="gather-tab-plant" class="gather-tab-btn px-4 py-2 rounded-lg bg-mh-dark border border-mh-border hover:bg-mh-border text-slate-300 font-bold text-sm transition">🌱 植物</button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-lg border border-mh-border">
+                        <table class="w-full text-left text-sm border-collapse bg-mh-panel">
+                            <thead>
+                                <tr class="border-b border-mh-border bg-mh-dark text-slate-400 font-bold">
+                                    <th class="py-3 px-4 w-1/5">素材名稱</th>
+                                    <th class="py-3 px-4 w-28">稀有度</th>
+                                    <th class="py-3 px-4 w-24">販售價值</th>
+                                    <th class="py-3 px-4 w-24 text-center">可調合?</th>
+                                    <th class="py-3 px-4">用途與效果描述</th>
+                                </tr>
+                            </thead>
+                            <tbody id="gather-loot-table" class="divide-y divide-mh-border">
+                                <!-- Dynamic -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        <!-- TAB 6: BASTION & FARMING -->
+        <div id="pane-bastion" class="tab-pane hidden space-y-6">
+            <div class="bg-mh-panel border border-mh-border rounded-xl p-6 shadow-xl">
+                <div class="border-b border-mh-border pb-4 mb-6">
+                    <h2 class="text-xl font-bold text-mh-gold mh-title">🏰 獵人公會據點與農場系統 (Bastion & Farm)</h2>
+                    <p class="text-sm text-slate-400 mt-1">建立專屬於玩家團隊的據點，進行自動化的素材種植與養殖，為狩獵提供源源不絕的後勤支援。</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    
+                    <!-- 基礎規則 -->
+                    <div class="bg-mh-dark/50 rounded-xl p-5 border border-mh-border h-full">
+                        <h3 class="text-lg font-bold text-slate-200 border-l-4 border-amber-500 pl-3 mb-4">基礎據點限制</h3>
+                        <ul class="space-y-4 text-slate-300 text-sm">
+                            <li class="flex items-center gap-4 bg-mh-panel p-3 rounded-lg border border-mh-border">
+                                <div class="bg-amber-900/30 p-3 rounded-lg text-amber-500"><i class="fa-solid fa-house-flag text-2xl"></i></div>
+                                <div>
+                                    <span class="block text-slate-400 text-xs mb-1">據點總量限制</span>
+                                    <span>玩家團隊最多可同時擁有 <span class="text-amber-400 font-black text-lg">7</span> 個據點。</span>
+                                </div>
+                            </li>
+                            <li class="flex items-center gap-4 bg-mh-panel p-3 rounded-lg border border-mh-border">
+                                <div class="bg-emerald-900/30 p-3 rounded-lg text-emerald-400"><i class="fa-solid fa-seedling text-2xl"></i></div>
+                                <div>
+                                    <span class="block text-slate-400 text-xs mb-1">農場槽位限制</span>
+                                    <span>每個據點最多可同時培育 <span class="text-emerald-300 font-black text-lg">4</span> 種不同的素材。</span>
+                                </div>
+                            </li>
+                        </ul>
+
+                        <h3 class="text-lg font-bold text-slate-200 border-l-4 border-emerald-500 pl-3 mt-8 mb-4">每次收成產量 (Yields)</h3>
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div class="bg-mh-panel p-3 rounded border border-mh-border flex flex-col items-center justify-center gap-1 text-center py-4">
+                                <span class="text-slate-400 font-bold text-xs">常見 (Common)</span>
+                                <span class="text-mh-gold font-black text-2xl">1d12</span>
+                            </div>
+                            <div class="bg-mh-panel p-3 rounded border border-mh-border flex flex-col items-center justify-center gap-1 text-center py-4">
+                                <span class="text-blue-300 font-bold text-xs">非常見 (Uncommon)</span>
+                                <span class="text-mh-gold font-black text-2xl">1d6</span>
+                            </div>
+                            <div class="bg-mh-panel p-3 rounded border border-mh-border flex flex-col items-center justify-center gap-1 text-center py-4">
+                                <span class="text-purple-300 font-bold text-xs">稀有 (Rare)</span>
+                                <span class="text-mh-gold font-black text-2xl">1d4</span>
+                            </div>
+                            <div class="bg-mh-panel p-3 rounded border border-mh-border flex flex-col items-center justify-center gap-1 text-center py-4">
+                                <span class="text-orange-300 font-bold text-xs">非常稀有 (Very Rare)</span>
+                                <span class="text-mh-gold font-black text-2xl">1 <span class="text-sm font-bold text-slate-400">固定</span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 等級成長解鎖 -->
+                    <div class="bg-mh-dark/50 rounded-xl p-5 border border-mh-border h-full">
+                        <h3 class="text-lg font-bold text-slate-200 border-l-4 border-sky-500 pl-3 mb-4">團隊等級解鎖進度 (Progression)</h3>
+                        <p class="text-xs text-slate-400 mb-5">據點能培育的素材稀有度與產量，取決於玩家團隊的整體等級：</p>
+                        
+                        <div class="space-y-3">
+                            <div class="flex items-start gap-3 p-3.5 rounded-lg bg-mh-panel border border-mh-border hover:border-slate-400 transition relative overflow-hidden">
+                                <div class="absolute left-0 top-0 bottom-0 w-1 bg-slate-500"></div>
+                                <div class="bg-slate-700 text-slate-200 font-black rounded-lg w-12 h-12 flex flex-col items-center justify-center shrink-0 leading-none">
+                                    <span class="text-[10px] text-slate-400">Level</span>
+                                    <span class="text-lg">5</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-slate-200 text-sm">解鎖：常見素材培育</h4>
+                                    <p class="text-xs text-slate-400 mt-1">據點建立！開始種植/養殖 <span class="text-slate-300 font-bold">常見 (Common)</span> 素材。<br>每次收成產量：<span class="text-mh-gold font-bold">1d12</span></p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-3 p-3.5 rounded-lg bg-mh-panel border border-mh-border hover:border-blue-500/50 transition relative overflow-hidden">
+                                <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                                <div class="bg-blue-900 text-blue-200 font-black rounded-lg w-12 h-12 flex flex-col items-center justify-center shrink-0 leading-none">
+                                    <span class="text-[10px] text-blue-400">Level</span>
+                                    <span class="text-lg">9</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-blue-300 text-sm">解鎖：非常見素材培育</h4>
+                                    <p class="text-xs text-slate-400 mt-1">據點升級！現在可培育 <span class="text-blue-300 font-bold">非常見 (Uncommon)</span> 素材。<br>每次收成產量：<span class="text-mh-gold font-bold">1d6</span></p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-3 p-3.5 rounded-lg bg-mh-panel border border-mh-border hover:border-purple-500/50 transition relative overflow-hidden">
+                                <div class="absolute left-0 top-0 bottom-0 w-1 bg-purple-500"></div>
+                                <div class="bg-purple-900 text-purple-200 font-black rounded-lg w-12 h-12 flex flex-col items-center justify-center shrink-0 leading-none">
+                                    <span class="text-[10px] text-purple-400">Level</span>
+                                    <span class="text-lg">13</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-purple-300 text-sm">解鎖：稀有素材培育</h4>
+                                    <p class="text-xs text-slate-400 mt-1">據點高度發展！可培育 <span class="text-purple-300 font-bold">稀有 (Rare)</span> 素材。<br>每次收成產量：<span class="text-mh-gold font-bold">1d4</span></p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start gap-3 p-3.5 rounded-lg bg-mh-panel border border-mh-border hover:border-orange-500/50 transition relative overflow-hidden">
+                                <div class="absolute left-0 top-0 bottom-0 w-1 bg-orange-500"></div>
+                                <div class="bg-orange-900 text-orange-200 font-black rounded-lg w-12 h-12 flex flex-col items-center justify-center shrink-0 leading-none">
+                                    <span class="text-[10px] text-orange-400">Level</span>
+                                    <span class="text-lg">17</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-orange-300 text-sm">解鎖：非常稀有素材培育</h4>
+                                    <p class="text-xs text-slate-400 mt-1">據點達到頂點！可培育 <span class="text-orange-300 font-bold">非常稀有 (Very Rare)</span> 素材。<br>每次穩定收成：<span class="text-mh-gold font-bold">固定 1 個</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </div>
+    </main>
+
+
+    <script>
+        // === ULTIMATE FULL DATABASE INTEGRATION ===
+        const DATABASE = {
+            weapons: [
+                { name: "加速斧 (Accel Axe)", cost: 50, damage: "1d12 slashing", weight: "8 lb.", props: "heavy, two-handed", type: "melee" },
+                { name: "盾斧/充能斧 (Charge Blade)", cost: 30, damage: "Varies (Appendix B)", weight: "7 lb.", props: "heavy, two-handed, switch mode", type: "melee" },
+                { name: "雙劍 (Dual Blades)", cost: 30, damage: "1d6 slashing", weight: "4 lb.", props: "finesse, light, comes with main & offhand", type: "melee" },
+                { name: "大劍 (Great Sword)", cost: 50, damage: "2d6 slashing", weight: "6 lb.", props: "heavy, two-handed", type: "melee" },
+                { name: "銃槍 (Gunlance)", cost: 50, damage: "1d8 piercing", weight: "12 lb.", props: "reach, reload, comes with a shield (AC+2)", type: "melee" },
+                { name: "大錘 (Hammer)", cost: 35, damage: "2d6 bludgeoning", weight: "10 lb.", props: "heavy, two-handed", type: "melee" },
+                { name: "狩獵笛 (Hunting Horn)", cost: 50, damage: "1d12 bludgeoning", weight: "8 lb.", props: "heavy, two-handed, chord length: 2", type: "melee" },
+                { name: "操蟲棍 (Insect Glaive)", cost: 35, damage: "1d10 slashing", weight: "5 lb.", props: "two-handed", type: "melee" },
+                { name: "長槍 (Lance)", cost: 40, damage: "1d8 piercing", weight: "12 lb.", props: "reach, versatile(1d10), comes with a shield (AC+2)", type: "melee" },
+                { name: "太刀 (Longsword)", cost: 25, damage: "1d10 slashing", weight: "3 lb.", props: "two-handed", type: "melee" },
+                { name: "磁力斬擊斧 (Magnet Spike)", cost: 35, damage: "Varies (Appendix B)", weight: "7 lb.", props: "heavy, two-handed", type: "melee" },
+                { name: "魔導法杖 (Magus Staff)", cost: 20, damage: "1d6 bludgeoning", weight: "4 lb.", props: "versatile (1d8)", type: "melee" },
+                { name: "雙手細劍 (Splint Rapier)", cost: 30, damage: "Varies (Appendix B)", weight: "4 lb.", props: "finesse, light", type: "melee" },
+                { name: "斬擊斧 (Switch Axe)", cost: 30, damage: "Varies (Appendix B)", weight: "7 lb.", props: "heavy, two-handed", type: "melee" },
+                { name: "片手劍 (Sword & Shield)", cost: 20, damage: "1d6 slashing", weight: "8 lb.", props: "finesse, light (AC+2)", type: "melee" },
+                { name: "穿龍棍 (Tonfas)", cost: 25, damage: "1d6 bludgeoning", weight: "6 lb.", props: "light, comes with main & offhand", type: "melee" },
+                { name: "鐵線拳套 (Wired Knuckles)", cost: 30, damage: "1d4 bludgeoning", weight: "2 lb.", props: "light, comes with main & offhand", type: "melee" },
+                { name: "飛龍迴力鏢 (Wyvern Boomerang)", cost: 40, damage: "1d10 slashing", weight: "8 lb.", props: "two-handed, thrown (60/180)", type: "melee" },
+                { name: "弓 (Bow)", cost: 24, damage: "1d8 piercing", weight: "2 lb.", props: "ammunition (150/600), two-handed", type: "ranged" },
+                { name: "雙重連射弩 (Dual Repeaters)", cost: 25, damage: "2d4 piercing", weight: "5 lb.", props: "ammunition (30/120), finesse, loading(6), light, special", type: "ranged" },
+                { name: "重弩 (Heavy Bowgun)", cost: 50, damage: "1d10 piercing", weight: "18 lb.", props: "ammunition (100/400), heavy, two-handed", type: "ranged" },
+                { name: "輕弩 (Light Bowgun)", cost: 24, damage: "1d4 piercing", weight: "5 lb.", props: "ammunition (80/320), two-handed, rapid fire", type: "ranged" }
+            ],
+            armors: [
+                { category: "Light Armor", name: "襯墊防具 (Padded)", cost: 5, ac: "11 + Dex", strength: "—", stealth: "劣勢", weight: "8 lb." },
+                { category: "Light Armor", name: "皮革防具 (Leather)", cost: 10, ac: "11 + Dex", strength: "—", stealth: "—", weight: "10 lb." },
+                { category: "Light Armor", name: "鑲嵌皮革 (Studded Leather)", cost: 45, ac: "12 + Dex", strength: "—", stealth: "—", weight: "13 lb." },
+                { category: "Medium Armor", name: "獸皮防具 (Hide)", cost: 10, ac: "12 + Dex (max 2)", strength: "—", stealth: "—", weight: "12 lb." },
+                { category: "Medium Armor", name: "鎖子甲襯衫 (Chain Shirt)", cost: 50, ac: "13 + Dex (max 2)", strength: "—", stealth: "—", weight: "20 lb." },
+                { category: "Medium Armor", name: "鱗甲 (Scale Mail)", cost: 50, ac: "14 + Dex (max 2)", strength: "—", stealth: "劣勢", weight: "45 lb." },
+                { category: "Medium Armor", name: "胸甲 (Breastplate)", cost: 400, ac: "14 + Dex (max 2)", strength: "—", stealth: "—", weight: "20 lb." },
+                { category: "Medium Armor", name: "半板甲 (Half Plate)", cost: 700, ac: "15 + Dex (max 2)", strength: "—", stealth: "劣勢", weight: "—" },
+                { category: "Heavy Armor", name: "環甲 (Ring Mail)", cost: 30, ac: "14", strength: "—", stealth: "劣勢", weight: "40 lb." },
+                { category: "Heavy Armor", name: "鎖子甲 (Chain Mail)", cost: 75, ac: "16", strength: "Str 13", stealth: "劣勢", weight: "55 lb." },
+                { category: "Heavy Armor", name: "條帶甲 (Splint)", cost: 200, ac: "17", strength: "Str 15", stealth: "劣勢", weight: "60 lb." },
+                { category: "Heavy Armor", name: "全身板甲 (Plate)", cost: 1500, ac: "18", strength: "Str 15", stealth: "劣勢", weight: "65 lb." }
+            ],
+            items: [
+                { name: "解毒藥 (Antidote)", cost: 75, weight: "—", desc: "中和身上受到的毒狀態（如果中有多個毒，隨機中和一個）。", rarity: "item" },
+                { name: "解毒笛 (Antidote Horn)", cost: 300, weight: "2 lb.", desc: "具有3格能量。消耗1格使60尺內一生物1小時內對毒素豁免具優勢。耗盡擲 d20，出 1 則毀壞。", rarity: "item" },
+                { name: "解毒石 (Antiseptic Stone)", cost: 50, weight: "1 lb.", desc: "捏碎它可使自己在接下來的 1 小時內對疾病的豁免檢定獲得優勢。", rarity: "item" },
+                { name: "硬化笛 (Armor Horn)", cost: 1200, weight: "2 lb.", desc: "具有3格能量。消耗1格可施展「信仰之盾」(須專注)。耗盡擲 d20，出 1 則毀壞。", rarity: "item" },
+                { name: "烤肉架 (BBQ Spit)", cost: 1, weight: "4 lb.", desc: "烤製美味肉食的必備道具。任何飢餓獵人的不二之選。", rarity: "item" },
+                { name: "素材彈殼 (Bomb Casing)", cost: 10, weight: "0 lb.", desc: "用於調合各式手擲炸彈（如閃光彈、糞便彈等）的基礎容器材料。", rarity: "item" },
+                { name: "噴氣爆彈 (Bounce Bomb)", cost: 50, weight: "5 lb.", desc: "點燃後直衝 100 尺高空並爆炸。對10尺內生物造成 3d6 火焰傷害（DC 12 敏捷豁免成功減半）。", rarity: "item" },
+                { name: "捕蟲網 (Bug Net)", cost: 2, weight: "1 lb.", desc: "用於在野外捕捉珍貴昆蟲的必備網子。", rarity: "item" },
+                { name: "剝取用小刀 (Carving Knife)", cost: 50, weight: "1 lb.", desc: "進行魔物剝取檢定時，若原本沒有「求生 (Survival)」熟練，可以加上熟練加成。", rarity: "item" },
+                { name: "增強劑/催化劑 (Catalyst)", cost: 50, weight: "1 lb.", desc: "與其他材料混合，用以催化、增幅成品的效果。無法單獨使用。", rarity: "item" },
+                { name: "除冰洗劑 (Cleanser)", cost: 300, weight: "0.5 lb.", desc: "以動作使用，可以立刻清除你盔甲或衣服上的冰、泥沙或蛛網。", rarity: "item" },
+                { name: "冷飲 (Cool Drink)", cost: 90, weight: "0.5 lb.", desc: "飲用後 24 小時內免受高達 120 華氏度（49°C）的高溫熱害影響。", rarity: "item" },
+                { name: "除臭劑 (Deodorant)", cost: 200, weight: "0.5 lb.", desc: "釋放除臭煙霧清除異味，使依賴嗅覺追蹤你的魔物在察覺檢定具劣勢（持續 1 小時）。", rarity: "item" },
+                { name: "一次性耳塞 (Disposable Earplugs)", cost: 10, weight: "—", desc: "使用時處於「耳聾」狀態，但對雷鳴傷害豁免獲優勢。取下後即溶解。", rarity: "item" },
+                { name: "糞便彈 (Dung Bomb)", cost: 100, weight: "0.5 lb.", desc: "命中使目標1小時內嗅覺察覺具劣勢。智力8以下魔物需DC15體質豁免，失敗須逃離。", rarity: "item" },
+                { name: "屬性桶裝爆彈 (Elemental Barrel Bomb)", cost: 250, weight: "20 lb.", desc: "調合時加入額外材料可改變爆炸屬性並增加傷害 (依素材稀有度 +1d6 ~ +5d6)。", rarity: "item" },
+                { name: "挑釁笛 (Field Horn)", cost: 400, weight: "2 lb.", desc: "使60尺內敵對生物進行 DC 14 意志豁免，失敗者會竭盡全力接近並攻擊你。使用後擲d20，5以下則毀壞。", rarity: "item" },
+                { name: "魚餌 - 破裂赤甲魚 (Fishing Lure Arrowana)", cost: 1, weight: "0.25 lb.", desc: "釣魚檢定成功時，骰1d4。1-2釣到破裂赤甲魚，3-4釣到爆裂赤甲魚。", rarity: "item" },
+                { name: "魚餌 - 爆彈魚 (Fishing Lure Popfish)", cost: 1, weight: "0.25 lb.", desc: "釣魚檢定成功時，保證釣起爆彈魚。", rarity: "item" },
+                { name: "魚餌 - 刺身魚 (Fishing Lure Sushifish)", cost: 1, weight: "0.25 lb.", desc: "釣魚檢定成功時，保證釣起刺身魚。", rarity: "item" },
+                { name: "魚餌 - 金槍魚 (Fishing Lure Pin Tuna)", cost: 1, weight: "0.25 lb.", desc: "釣魚檢定成功時，保證釣起刺班金槍魚。", rarity: "item" },
+                { name: "魚餌 - 磨刀魚 (Fishing Lure Whetfish)", cost: 1, weight: "0.25 lb.", desc: "釣魚檢定成功時，保證釣起磨刀魚。", rarity: "item" },
+                { name: "閃光彈 (Flash Bomb)", cost: 100, weight: "0.5 lb.", desc: "投擲後使5尺內生物進行 DC 13 體質豁免，失敗者「致盲」1 分鐘。", rarity: "item" },
+                { name: "凍結漿果 (Frozen Berry)", cost: 0, weight: "—", desc: "吃下後，你獲得火焰傷害抗性 (Resistance to Fire)，持續 1 小時。", rarity: "item" },
+                { name: "火藥 (Gunpowder)", cost: 3, weight: "—", desc: "危險物質。點燃一盎司火藥會劇烈燃燒 1 輪，散發 30 尺明亮光線與額外 30 尺微光。", rarity: "item" },
+                { name: "回復笛 (Health Horn)", cost: 500, weight: "2 lb.", desc: "短休時吹奏。能聽見此演奏的友方生物花費生命骰回復HP時，額外回復 1d4 點。", rarity: "item" },
+                { name: "熱飲 (Hot Drink)", cost: 90, weight: "0.5 lb.", desc: "飲用後 24 小時內可忍受低至 -45°C 的極寒；穿厚衣可耐受 -73°C。", rarity: "item" },
+                { name: "增強劑/免疫劑 (Immunizer)", cost: 180, weight: "0.5 lb.", desc: "飲用後，在接下來的 1 小時內對疾病的豁免檢定獲得優勢。", rarity: "item" },
+                { name: "大空桶 (Large Barrel)", cost: 2, weight: "2 lb.", desc: "無法購買。只能用於調合大桶裝爆彈的基礎外殼。", rarity: "item" },
+                { name: "小空桶 (Small Barrel)", cost: 1, weight: "1 lb.", desc: "無法購買。只能用於調合小桶裝爆彈的基礎外殼。", rarity: "item" },
+                { name: "大桶裝爆彈 (Lg Barrel-bomb)", cost: 250, weight: "20 lb.", desc: "點燃引爆，對10尺內所有生物造成 7d6 火焰傷害（DC 15 敏捷豁免成功減半）。", rarity: "item" },
+                { name: "小桶裝爆彈 (Sm Barrel-bomb)", cost: 35, weight: "5 lb.", desc: "引爆後對10尺內所有生物造成 3d6 火焰傷害（DC 12 敏捷豁免成功減半）。", rarity: "item" },
+                { name: "冰鎮熟肉 (Meat, Chilled)", cost: 0, weight: "1 lb.", desc: "吃下後，24 小時內免受高達 49°C 的高溫熱害影響。", rarity: "item" },
+                { name: "麻醉生肉 (Meat, Drugged)", cost: 0, weight: "1 lb.", desc: "吃下此肉的生物必須通過 DC 15 體質豁免，否則「昏迷」5 分鐘。", rarity: "item" },
+                { name: "暖胃熱肉 (Meat, Hot)", cost: 0, weight: "1 lb.", desc: "吃下後，24 小時內可忍受低至 -45°C 的極寒氣候。", rarity: "item" },
+                { name: "毒生肉 (Meat, Poisoned)", cost: 0, weight: "1 lb.", desc: "吃下此肉的生物必須通過 DC 10 體質豁免。失敗承受 1d12 毒素傷害並中毒 24 小時。", rarity: "item" },
+                { name: "麻痺生肉 (Meat, Tainted)", cost: 0, weight: "1 lb.", desc: "吃下此肉的生物必須通過 DC 13 體質豁免，否則中毒 1 分鐘並同時陷入「麻痺」。", rarity: "item" },
+                { name: "網格捕蟲網 (Mega Bug Net)", cost: 1500, weight: "1 lb.", desc: "使用此網捕捉昆蟲時，你的敏捷或自然檢定具有優勢。若檢定超過難度 4 點以上，額外獲得一隻昆蟲。", rarity: "item" },
+                { name: "精緻釣竿 (Mega Fishing Pole)", cost: 1500, weight: "3 lb.", desc: "使用此竿釣魚時，你的力量或手藝檢定具有優勢。若檢定超過難度 4 點以上，額外釣起一條魚。", rarity: "item" },
+                { name: "精鋼鐵鎬 (Mega Pickaxe)", cost: 1500, weight: "10 lb.", desc: "使用此鎬挖礦時，你的力量檢定具有優勢。若檢定超過難度 4 點以上，額外挖到一塊礦石。", rarity: "item" },
+                { name: "營養劑 (Nutrients)", cost: 0, weight: "0.5 lb.", desc: "飲用後，最大生命值上限提高 5 點，並回復相應生命值。持續 8 小時。", rarity: "item" },
+                { name: "大營養劑 (Mega Nutrients)", cost: 0, weight: "1 lb.", desc: "飲用後，最大生命值上限提高 10 點，並回復相應生命值。持續 8 小時。", rarity: "item" },
+                { name: "氧氣球 (Oxygen Supply)", cost: 15, weight: "1 lb.", desc: "充滿氧氣的球囊。提供長達 10 分鐘的可呼吸空氣。", rarity: "item" },
+                { name: "染色彈 (Paintball)", cost: 20, weight: "0.5 lb.", desc: "命中目標將其標記 1 小時。追蹤被標記生物的察覺與求生檢定具有優勢。", rarity: "item" },
+                { name: "落穴陷阱 (Pitfall Trap)", cost: 700, weight: "10 lb.", desc: "當大型以下魔物踩踏時掉入坑洞，須通過 DC 14 力量豁免否則被「束縛」。", rarity: "item" },
+                { name: "落穴陷阱+ (Pitfall Trap+)", cost: 1500, weight: "10 lb.", desc: "與落穴陷阱相同，但其豁免難度提升至 DC 18。", rarity: "item" },
+                { name: "毒煙霧彈 (Poison Smoke Bomb)", cost: 50, weight: "0.5 lb.", desc: "1輪後散發20尺半徑毒煙。在煙霧中開始回合的生物須DC 13體質豁免否則中毒1小時。", rarity: "item" },
+                { name: "麻痺陷阱 (Shock Trap)", cost: 1000, weight: "10 lb.", desc: "大型以上生物踩入時，須通過 DC 14 體質豁免，否則「失能」且移動速度歸零 1 分鐘。", rarity: "item" },
+                { name: "麻痺陷阱+ (Shock Trap+)", cost: 2000, weight: "10 lb.", desc: "與麻痺陷阱相同，但其豁免難度提升至 DC 18。", rarity: "item" },
+                { name: "煙霧彈 (Smoke Bomb)", cost: 50, weight: "0.5 lb.", desc: "1輪後散發20尺半徑煙霧，造成重度遮蔽 (微風4輪吹散，強風1輪吹散)。", rarity: "item" },
+                { name: "音爆彈 (Sonic Bomb)", cost: 100, weight: "0.5 lb.", desc: "使 30 尺內所有生物進行 DC 13 體質豁免，失敗者「耳聾」1 分鐘（潛地魔物奇效）。", rarity: "item" },
+                { name: "麻醉彈 (Tranq Bomb)", cost: 50, weight: "0.5 lb.", desc: "命中後若目標 HP 低於 25% 且剩餘血量低於 5d8，將會「昏迷」24 小時。", rarity: "item" },
+                { name: "陷阱機關 (Trap Tool)", cost: 500, weight: "10 lb.", desc: "必備的機械套件。用於將素材組裝成落穴陷阱或其他大型陷阱的核心組件。", rarity: "item" },
+                { name: "烤得完美的肉 (Well-done Steak)", cost: 0, weight: "1 lb.", desc: "當作一日口糧，接下來8小時內任意一項自選技能檢定獲 +1 獎勵。", rarity: "item" },
+                { name: "硬化藥丸 (Adamant Pill)", cost: 200, weight: "—", desc: "服用後在接下來的 10 分鐘內獲得 +2 AC 加成。不疊加數值，僅延長時間。", rarity: "magic" },
+                { name: "空氣藥水 (Air Philter)", cost: 75, weight: "1 lb.", desc: "1小時內可在缺氧環境呼吸，且對有害氣體、煙霧及龍息豁免具有優勢。", rarity: "magic" },
+                { name: "古代秘藥 (Ancient Potion)", cost: 10000, weight: "1 lb.", desc: "飲用後立即回復 70 HP，並完全清除所有力竭 (Exhaustion) 層數。一天僅能食用一次。", rarity: "magic" },
+                { name: "硬化藥 (Armorskin)", cost: 375, weight: "0.5 lb.", desc: "飲用後 8 小時內，你的 AC 基礎值變為 13 + 敏捷修正值。", rarity: "magic" },
+                { name: "強走藥 (Dash Juice)", cost: 75, weight: "0.5 lb.", desc: "飲用後移動速度增加 10 尺，持續 1 小時。", rarity: "magic" },
+                { name: "鬼人藥 (Demondrug)", cost: 1500, weight: "0.5 lb.", desc: "飲用後 1 小時內，你的力量屬性數值獲得 +2 加成。", rarity: "magic" },
+                { name: "生命大粉塵 (Dust of Life)", cost: 1000, weight: "1 lb.", desc: "使自己與 30 尺內最近的 7 個友方生物，立即回復 1d6+2 HP。", rarity: "magic" },
+                { name: "能量飲料 (Energy Drink)", cost: 2000, weight: "0.5 lb.", desc: "飲用後，能立即減少一級力竭 (Exhaustion) 層數。", rarity: "magic" },
+                { name: "漢方藥 (Herbal Medicine)", cost: 75, weight: "0.5 lb.", desc: "1小時內對毒素豁免具優勢，並立即回復 1d4 HP。對不死/構築體無效。", rarity: "magic" },
+                { name: "生命粉塵 (Lifepowder)", cost: 300, weight: "1 lb.", desc: "使自己與 30 尺內最近的 7 個友方生物，立即回復 1d4+2 HP。", rarity: "magic" },
+                { name: "秘藥 (Max Potion)", cost: 10000, weight: "1 lb.", desc: "移除所有負面狀態，並瞬間回復 45 HP。一天僅能食用兩次。", rarity: "magic" },
+                { name: "強效空氣藥水 (Mega Air Philter)", cost: 180, weight: "1 lb.", desc: "24 小時內可在任何缺氧環境下呼吸，並對有害氣體、煙霧及龍息豁免具有優勢。", rarity: "magic" },
+                { name: "硬化藥·大 (Mega Armorskin)", cost: 750, weight: "0.5 lb.", desc: "飲用後 8 小時內，你的 AC 基礎值變為 15 + 敏捷修正值。", rarity: "magic" },
+                { name: "強走藥·大 (Mega Dash Juice)", cost: 375, weight: "0.5 lb.", desc: "飲用後移動速度增加 20 尺，持續 1 小時。", rarity: "magic" },
+                { name: "鬼人藥·大 (Mega Demondrug)", cost: 4000, weight: "0.5 lb.", desc: "飲用後 1 小時內，你的力量屬性數值獲得 +4 的極大加成。", rarity: "magic" },
+                { name: "怪力藥丸 (Might Pill)", cost: 1500, weight: "—", desc: "1分鐘內力量增加 +4。藥效結束後獲得一級力竭。", rarity: "magic" },
+                { name: "精力劑 (Power Juice)", cost: 400, weight: "0.5 lb.", desc: "獲得法術「加速術 (Haste)」效果，持續 1 分鐘 (需維持專注)。", rarity: "magic" },
+                { name: "千里眼藥水 (Psychoserum)", cost: 500, weight: "0.5 lb.", desc: "暫時極度放大第六感。24 小時內，追蹤魔物的求生檢定獲優勢。", rarity: "magic" }
+            ],
+            shops: {
+                provision: [
+                    { name: "解毒藥 (Antidote)", cost: 75, weight: "—" },
+                    { name: "硬化藥丸 (Adamant Pill)", cost: 200, weight: "—" },
+                    { name: "解毒石 (Antiseptic Stone)", cost: 50, weight: "1 lb." },
+                    { name: "硬化藥 (Armorskin)", cost: 375, weight: "0.5 lb." },
+                    { name: "噴氣爆彈 (Bounce Bomb)", cost: 50, weight: "5 lb." },
+                    { name: "大桶裝爆彈 (Lg Barrel-bomb)", cost: 250, weight: "20 lb." },
+                    { name: "小桶裝爆彈 (Sm Barrel-bomb)", cost: 35, weight: "5 lb." },
+                    { name: "烤肉架 (BBQ Spit)", cost: 1, weight: "4 lb." },
+                    { name: "素材彈殼 (Bomb Casing)", cost: 10, weight: "0 lb." },
+                    { name: "捕蟲網 (Bug Net)", cost: 2, weight: "1 lb." },
+                    { name: "剝取用小刀 (Carving Knife)", cost: 50, weight: "1 lb." },
+                    { name: "除冰洗劑 (Cleanser)", cost: 300, weight: "0.5 lb." },
+                    { name: "冷飲 (Cool Drink)", cost: 90, weight: "0.5 lb." },
+                    { name: "強走藥 (Dash Juice)", cost: 75, weight: "0.5 lb." },
+                    { name: "鬼人藥 (Demondrug)", cost: 1500, weight: "0.5 lb." },
+                    { name: "除臭劑 (Deodorant)", cost: 200, weight: "0.5 lb." },
+                    { name: "一次性耳塞 (Disposable Earplugs)", cost: 10, weight: "—" },
+                    { name: "生命大粉塵 (Dust of Life)", cost: 1000, weight: "1 lb." },
+                    { name: "能量飲料 (Energy Drink)", cost: 2000, weight: "0.5 lb." },
+                    { name: "糞便彈 (Dung Bomb)", cost: 100, weight: "0.5 lb." },
+                    { name: "閃光彈 (Flash Bomb)", cost: 100, weight: "0.5 lb." },
+                    { name: "毒煙霧彈 (Poison Smoke Bomb)", cost: 50, weight: "0.5 lb." },
+                    { name: "煙霧彈 (Smoke Bomb)", cost: 50, weight: "0.5 lb." },
+                    { name: "音爆彈 (Sonic Bomb)", cost: 100, weight: "0.5 lb." },
+                    { name: "麻醉彈 (Tranq Bomb)", cost: 50, weight: "0.5 lb." },
+                    { name: "漢方藥 (Herbal Medicine)", cost: 75, weight: "0.5 lb." },
+                    { name: "硬化笛 (Armor Horn)", cost: 1200, weight: "2 lb." },
+                    { name: "解毒笛 (Antidote Horn)", cost: 300, weight: "2 lb." },
+                    { name: "挑釁笛 (Field Horn)", cost: 400, weight: "2 lb." },
+                    { name: "回復笛 (Health Horn)", cost: 500, weight: "2 lb." },
+                    { name: "熱飲 (Hot Drink)", cost: 90, weight: "0.5 lb." },
+                    { name: "增強劑 (Immunizer)", cost: 180, weight: "0.5 lb." },
+                    { name: "生命粉塵 (Lifepowder)", cost: 300, weight: "1 lb." },
+                    { name: "硬化藥·大 (Mega Armorskin)", cost: 750, weight: "0.5 lb." },
+                    { name: "網格捕蟲網 (Mega Bug Net)", cost: 1500, weight: "1 lb." },
+                    { name: "強走藥·大 (Mega Dash Juice)", cost: 375, weight: "0.5 lb." },
+                    { name: "鬼人藥·大 (Mega Demondrug)", cost: 4000, weight: "0.5 lb." },
+                    { name: "精緻釣竿 (Mega Fishing Pole)", cost: 1500, weight: "3 lb." },
+                    { name: "精鋼鐵鎬 (Mega Pickaxe)", cost: 1500, weight: "10 lb." },
+                    { name: "怪力藥丸 (Might Pill)", cost: 1500, weight: "—" },
+                    { name: "染色彈 (Paintball)", cost: 20, weight: "0.5 lb." },
+                    { name: "千里眼藥水 (Psychoserum)", cost: 500, weight: "0.5 lb." },
+                    { name: "落穴陷阱 (Pitfall Trap)", cost: 700, weight: "10 lb." },
+                    { name: "落穴陷阱+ (Pitfall Trap+)", cost: 1500, weight: "10 lb." },
+                    { name: "麻痺陷阱 (Shock Trap)", cost: 1000, weight: "10 lb." },
+                    { name: "麻痺陷阱+ (Shock Trap+)", cost: 2000, weight: "10 lb." }
+                ],
+                general: [
+                    { name: "算盤 (Abacus)", cost: 2, weight: "2 lb." },
+                    { name: "強酸瓶 (Acid, vial)", cost: 25, weight: "1 lb." },
+                    { name: "煉金術士之火 (Alchemist's fire, flask)", cost: 50, weight: "1 lb." },
+                    { name: "煉金工具組 (Alchemist's supplies)", cost: 50, weight: "8 lb." },
+                    { name: "萬能解毒劑 (Antitoxin, vial)", cost: 50, weight: "—" },
+                    { name: "旅行背包 (Backpack)", cost: 2, weight: "5 lb." },
+                    { name: "睡袋 (Bedroll)", cost: 1, weight: "7 lb." },
+                    { name: "玻璃空瓶 (Bottle, glass)", cost: 2, weight: "2 lb." },
+                    { name: "釀造工具包 (Brewer's supplies)", cost: 20, weight: "9 lb." },
+                    { name: "水桶 (Bucket)", cost: 0.05, weight: "2 lb." },
+                    { name: "捕蟲網 (Bug net)", cost: 0.1, weight: "1 lb." },
+                    { name: "蠟燭 (Candle)", cost: 0.01, weight: "—" },
+                    { name: "木箱 (Chest)", cost: 5, weight: "25 lb." },
+                    { name: "攀爬工具包 (Climber's kit)", cost: 25, weight: "12 lb." },
+                    { name: "旅行者便服 (Clothes, traveler's)", cost: 2, weight: "4 lb." },
+                    { name: "除臭劑 (Deodorant)", cost: 200, weight: "0.5 lb." },
+                    { name: "隨身瓶或酒杯 (Flask or tankard)", cost: 0.02, weight: "1 lb." },
+                    { name: "魚餌 - 破裂赤甲魚 (Fishing Lure, Arrowana)", cost: 1, weight: "0.25 lb." },
+                    { name: "魚餌 - 爆彈魚 (Fishing Lure, Popfish)", cost: 1, weight: "0.25 lb." },
+                    { name: "魚餌 - 刺身魚 (Fishing Lure, Sushifish)", cost: 1, weight: "0.25 lb." },
+                    { name: "魚餌 - 刺班金槍魚 (Fishing Lure, Tuna)", cost: 1, weight: "0.25 lb." },
+                    { name: "魚餌 - 磨刀魚 (Fishing Lure, Whetfish)", cost: 1, weight: "0.25 lb." },
+                    { name: "釣魚用具 (Fishing tackle)", cost: 1, weight: "4 lb." },
+                    { name: "攀爬用爪鉤 (Grappling hook)", cost: 2, weight: "4 lb." },
+                    { name: "治療工具包 (Healer's kit)", cost: 5, weight: "3 lb." },
+                    { name: "草藥師工具包 (Herbalism kit)", cost: 5, weight: "3 lb." },
+                    { name: "普通號角 (Horn)", cost: 3, weight: "2 lb." },
+                    { name: "墨水 (Ink, 1 ounce bottle)", cost: 10, weight: "—" },
+                    { name: "墨水筆 (Ink pen)", cost: 0.02, weight: "—" },
+                    { name: "放大鏡 (Magnifying glass)", cost: 100, weight: "—" },
+                    { name: "野炊用具包 (Mess kit)", cost: 0.2, weight: "1 lb." },
+                    { name: "燈油 (Oil, flask)", cost: 0.1, weight: "1 lb." },
+                    { name: "毒藥工具包 (Poisoner's Kit)", cost: 50, weight: "2 lb." },
+                    { name: "治療藥水 (Potion of healing)", cost: 50, weight: "0.5 lb." },
+                    { name: "野外口糧1天份 (Rations, 1 day)", cost: 0.5, weight: "2 lb." },
+                    { name: "麻繩50尺 (Rope, hempen, 50 feet)", cost: 1, weight: "10 lb." },
+                    { name: "絲繩50尺 (Rope, silk, 50 feet)", cost: 10, weight: "5 lb." },
+                    { name: "布袋 (Sack)", cost: 0.01, weight: "0.5 lb." },
+                    { name: "雙人帳篷 (Tent, two-person)", cost: 2, weight: "20 lb." },
+                    { name: "打火匣 (Tinderbox)", cost: 0.5, weight: "1 lb." },
+                    { name: "火把 (Torch)", cost: 0.01, weight: "1 lb." },
+                    { name: "空藥水瓶 (Vial)", cost: 1, weight: "—" },
+                    { name: "裝滿的水袋 (Waterskin, full)", cost: 0.2, weight: "5 lb." }
+                ],
+                ammo: [
+                    { name: "通常彈 Normal Ammo (20發)", cost: 1, weight: "1.5 lb." },
+                    { name: "麻痺彈 Paralysis Ammo (1發)", cost: 4, weight: "1.5 lb." },
+                    { name: "毒彈 Poison Ammo (1發)", cost: 4, weight: "1.5 lb." },
+                    { name: "回復彈 Lvl 1 Recover (1發)", cost: 5, weight: "1.5 lb." },
+                    { name: "大回復彈 Lvl 2 Recover (1發)", cost: 7, weight: "1.5 lb." },
+                    { name: "散彈 Spread Ammo (20發)", cost: 3, weight: "1.5 lb." },
+                    { name: "徹甲榴彈 Sticky Ammo (1發)", cost: 1, weight: "1.5 lb." },
+                    { name: "捕獲用麻醉彈 Tranq Ammo (1發)", cost: 50, weight: "1.5 lb." },
+                    { name: "貫通彈 Lvl 1 (20發) [重弩專用]", cost: 2, weight: "1.5 lb." },
+                    { name: "貫通彈 Lvl 2 (20發) [重弩專用]", cost: 3, weight: "1.5 lb." },
+                    { name: "貫通彈 Lvl 3 (20發) [重弩專用]", cost: 4, weight: "1.5 lb." },
+                    { name: "擴散彈 Cluster Ammo (1發) [重弩專用]", cost: 5, weight: "1.5 lb." },
+                    { name: "斬裂彈 Slicing Ammo (1發) [重弩專用]", cost: 5, weight: "1.5 lb." },
+                    { name: "龍擊彈 Wyvern Ammo (1發) [重弩專用]", cost: 10, weight: "1.5 lb." },
+                    { name: "硬化彈 Armor Ammo (1發) [輕弩專用]", cost: 8, weight: "1.5 lb." },
+                    { name: "鬼人彈 Demon Ammo (1發) [輕弩專用]", cost: 8, weight: "1.5 lb." },
+                    { name: "滅龍彈 Dragon Ammo (20發) [輕弩專用]", cost: 3, weight: "1.5 lb." },
+                    { name: "火焰彈 Flaming Ammo (20發) [輕弩專用]", cost: 3, weight: "1.5 lb." },
+                    { name: "貫通彈 Pierce Ammo (20發) [輕弩專用]", cost: 2, weight: "1.5 lb." },
+                    { name: "減氣/睡眠彈 Sleep Ammo (1發) [輕弩專用]", cost: 5, weight: "1.5 lb." },
+                    { name: "雷光彈 Thunder Ammo (20發) [輕弩專用]", cost: 3, weight: "1.5 lb." },
+                    { name: "水冷彈 Water Ammo (20發) [輕弩專用]", cost: 3, weight: "1.5 lb." },
+                    { name: "箭矢 Arrows (20發)", cost: 1, weight: "1 lb." },
+                    { name: "強擊瓶 Power Coating (1發) [弓專用]", cost: 1, weight: "0.25 lb." },
+                    { name: "接擊瓶 Close Range Coating (1發) [弓專用]", cost: 1, weight: "0.25 lb." },
+                    { name: "雙連發通常彈 Normal Ammo (18發) [雙重連射弩]", cost: 1, weight: "1 lb." }
+                ]
+            },
+            crafting: {
+                Alchemist: [
+                    { name: "解毒石 (Antiseptic Stone)", item1: "地球結晶 (Earth Crystal)", item2: "苦蟲 (Bitterbug)", dc: 15, qty: "1" },
+                    { name: "增強劑/催化劑 (Catalyst)", item1: "蜂蜜 (Honey)", item2: "苦蟲 (Bitterbug)", dc: 15, qty: "1" },
+                    { name: "除冰洗劑 (Cleanser)", item1: "暖暖辣椒 (Hot Pepper)", item2: "破裂赤甲魚 (Burst Arrowana)", dc: 15, qty: "1d4" },
+                    { name: "火藥 (Gunpowder 30oz)", item1: "火焰草 (Fire Herb)", item2: "硝化傘菇 (Nitroshroom)", dc: 10, qty: "30 oz" },
+                    { name: "免疫劑 (Immunizer)", item1: "催化劑 (Catalyst)", item2: "捆綁菇 (Bindshroom)", dc: 15, qty: "10" },
+                    { name: "生命結晶 (Lifecrystals)", item1: "神仙蟲 (Godbug)", item2: "鳥龍種牙齒 (Bird Wyvern Fang)", dc: 12, qty: "1" },
+                    { name: "古代秘藥 (Ancient Potion)", item1: "大營養劑 (Mega Nutrients)", item2: "雪鹿角 (Kelbi Horn)", dc: 20, qty: "1" },
+                    { name: "秘藥 (Max Potion)", item1: "大營養劑 (Mega Nutrients)", item2: "心之毒菇 (Dragon Toadstool)", dc: 20, qty: "1" },
+                    { name: "治療藥水 (Potion of Healing)", item1: "藥草 (Herb)", item2: "藍色香菇 (Blue Mushroom)", dc: 10, qty: "1" },
+                    { name: "大治療藥水 (Potion of Greater Healing)", item1: "治療藥水 (Potion of Healing)", item2: "蜂蜜 (Honey)", dc: 12, qty: "1" },
+                    { name: "硬化藥丸 (Adamant Pill)", item1: "免疫劑 (Immunizer)", item2: "忍耐種子 (Adamant Seed)", dc: 15, qty: "1" },
+                    { name: "硬化藥 (Armorskin)", item1: "催化劑 (Catalyst)", item2: "忍耐種子 (Adamant Seed)", dc: 17, qty: "1" },
+                    { name: "硬化藥·大 (Mega Armorskin)", item1: "硬化藥 (Armorskin)", item2: "白濁精華 (Pale Extract)", dc: 20, qty: "1" },
+                    { name: "鬼人藥 (Demondrug)", item1: "催化劑 (Catalyst)", item2: "怪力種子 (Might Seed)", dc: 17, qty: "1" },
+                    { name: "鬼人藥·大 (Mega Demondrug)", item1: "鬼人藥 (Demondrug)", item2: "白濁精華 (Pale Extract)", dc: 20, qty: "1" },
+                    { name: "怪力藥丸 (Might Pill)", item1: "免疫劑 (Immunizer)", item2: "怪力種子 (Might Seed)", dc: 15, qty: "1" }
+                ],
+                Brewer: [
+                    { name: "冷飲 (Cool Drink)", item1: "雪山草 (Snow Herb)", item2: "苦蟲 (Bitterbug)", dc: 12, qty: "1" },
+                    { name: "冷飲 (Cool Drink)", item1: "苦蟲 (Bitterbug)", item2: "冰結晶 (Ice Crystal)", dc: 12, qty: "1" },
+                    { name: "強走藥 (Dash Juice)", item1: "催化劑 (Catalyst)", item2: "生肉 (Raw Meat)", dc: 15, qty: "1" },
+                    { name: "能量飲料 (Energy Drink)", item1: "硝化傘菇 (Nitroshroom)", item2: "蜂蜜 (Honey)", dc: 17, qty: "1" },
+                    { name: "熱飲 (Hot Drink)", item1: "暖暖辣椒 (Hot Pepper)", item2: "苦蟲 (Bitterbug)", dc: 12, qty: "1" },
+                    { name: "強走藥·大 (Mega Dash Juice)", item1: "狂奔精華 (Dash Extract)", item2: "烤得完美的肉 (Well-done Steak)", dc: 17, qty: "1" },
+                    { name: "精力劑 (Power Juice)", item1: "催化劑 (Catalyst)", item2: "生肉 (Raw Meat)", dc: 15, qty: "1" }
+                ],
+                Cook: [
+                    { name: "凍結漿果 (Frozen Berry)", item1: "熱帶漿果 (Tropical Berry)", item2: "冰結晶 (Ice Crystal)", dc: 12, qty: "1" },
+                    { name: "冰鎮熟肉 (Meat Chilled)", item1: "烤得完美的肉 (Well-done Steak)", item2: "雪山草 (Snow Herb)", dc: 12, qty: "1" },
+                    { name: "麻醉生肉 (Meat Drugged)", item1: "生肉 (Raw Meat)", item2: "眠草 (Sleep Herb)", dc: 12, qty: "1" },
+                    { name: "暖胃熱肉 (Meat Hot)", item1: "烤得完美的肉 (Well-done Steak)", item2: "暖暖辣椒 (Hot Pepper)", dc: 10, qty: "1" },
+                    { name: "毒生肉 (Meat Poisoned)", item1: "生肉 (Raw Meat)", item2: "毒傘菇 (Toadstool)", dc: 12, qty: "1" },
+                    { name: "麻痺生肉 (Meat Tainted)", item1: "生肉 (Raw Meat)", item2: "麻痺香菇 (Parashroom)", dc: 12, qty: "1" },
+                    { name: "烤得完美的肉 (Well-done Steak)", item1: "生肉 (Raw Meat)", item2: "—", dc: 15, qty: "1" }
+                ],
+                Glassblower: [
+                    { name: "空瓶 (Empty Phial)", item1: "小型骨殼 (Sm Bone Husk)", item2: "磨刀魚 (Whetfish)", dc: 12, qty: "10" }
+                ],
+                Herbalism: [
+                    { name: "解毒藥 (Antidote)", item1: "解毒草 (Antidote Herb)", item2: "藍色香菇 (Blue Mushroom)", dc: 10, qty: "1" },
+                    { name: "漢方藥 (Herbal Medicine)", item1: "仙人掌花 (Cactus Flower)", item2: "苦蟲 (Bitterbug)", dc: 12, qty: "1" },
+                    { name: "漢方藥 (Herbal Medicine)", item1: "昏暗草根 (Gloamgrass Root)", item2: "苦蟲 (Bitterbug)", dc: 12, qty: "1" },
+                    { name: "生命粉塵 (Lifepowder)", item1: "生命結晶 (Lifecrystals)", item2: "鳥龍種牙齒 (Bird Wyvern Fang)", dc: 17, qty: "1" },
+                    { name: "營養劑 (Nutrients)", item1: "神仙蟲 (Godbug)", item2: "藍色香菇 (Blue Mushroom)", dc: 12, qty: "1" },
+                    { name: "大營養劑 (Mega Nutrients)", item1: "營養劑 (Nutrients)", item2: "蜂蜜 (Honey)", dc: 15, qty: "1" },
+                    { name: "爆破瓶 (Blast Coating)", item1: "爆裂赤甲魚 (Bomb Arrowana)", item2: "空瓶 (Empty Phial)", dc: 12, qty: "1" },
+                    { name: "接擊瓶 (Close Range Coating)", item1: "磨刀魚 (Whetfish)", item2: "空瓶 (Empty Phial)", dc: 12, qty: "1" },
+                    { name: "麻痺瓶 (Paralysis Coating)", item1: "麻痺香菇 (Parashroom)", item2: "空瓶 (Empty Phial)", dc: 12, qty: "1" },
+                    { name: "毒瓶 (Poison Coating)", item1: "毒傘菇 (Toadstool)", item2: "空瓶 (Empty Phial)", dc: 12, qty: "1" },
+                    { name: "強擊瓶 (Power Coating)", item1: "火焰草 (Fire Herb)", item2: "空瓶 (Empty Phial)", dc: 12, qty: "1" },
+                    { name: "強擊瓶 (Power Coating)", item1: "硝化傘菇 (Nitroshroom)", item2: "空瓶 (Empty Phial)", dc: 12, qty: "1" },
+                    { name: "強擊瓶+2 (Power Coating+2)", item1: "硝化傘菇 (Nitroshroom)", item2: "空瓶 (Empty Phial)", dc: 14, qty: "1" },
+                    { name: "強擊瓶+3 (Power Coating+3)", item1: "硝化傘菇 (Nitroshroom)", item2: "空瓶 (Empty Phial)", dc: 16, qty: "1" },
+                    { name: "睡眠瓶 (Sleep Coating)", item1: "眠草 (Sleep Herb)", item2: "空瓶 (Empty Phial)", dc: 12, qty: "1" },
+                    { name: "火焰彈 (Blaze Ammo)", item1: "硝化傘菇 (Nitroshroom)", item2: "昆蟲空殼 (Insect Husk)", dc: 12, qty: "5" },
+                    { name: "冰結彈 (Cryo Ammo)", item1: "雪山草 (Snow Herb)", item2: "昆蟲空殼 (Insect Husk)", dc: 12, qty: "10" },
+                    { name: "晨星彈 (Dawnstar Ammo)", item1: "興奮菇 (Exciteshroom)", item2: "昆蟲空殼 (Insect Husk)", dc: 12, qty: "5" },
+                    { name: "全口徑彈 (Full-Bore Ammo)", item1: "針果 (Needleberry)", item2: "昆蟲空殼 (Insect Husk)", dc: 12, qty: "5" },
+                    { name: "神射手彈 (Marksman Ammo)", item1: "毒傘菇 (Toadstool)", item2: "昆蟲空殼 (Insect Husk)", dc: 12, qty: "5" },
+                    { name: "通常彈 (Normal Ammo)", item1: "空心果 (Huskberry)", item2: "昆蟲空殼 (Insect Husk)", dc: 12, qty: "10" },
+                    { name: "風暴彈 (Storm Ammo)", item1: "雷光蟲 (Thunderbug)", item2: "昆蟲空殼 (Insect Husk)", dc: 12, qty: "1" },
+                    { name: "黏菌彈 (Slime Ammo)", item1: "黏著草 (Sap Plant)", item2: "昆蟲空殼 (Insect Husk)", dc: 12, qty: "1" },
+                    { name: "麻醉彈 (Tranq Ammo)", item1: "眠草 (Sleep Herb)", item2: "昆蟲空殼 (Insect Husk)", dc: 12, qty: "1" },
+                    { name: "暮光彈 (Twlight Ammo)", item1: "昏暗草根 (Gloamgrass Root)", item2: "昆蟲空殼 (Insect Husk)", dc: 12, qty: "1" }
+                ],
+                Poisoner: [
+                    { name: "麻醉生肉 (Meat Drugged)", item1: "生肉 (Raw Meat)", item2: "眠草 (Sleep Herb)", dc: 12, qty: "1" },
+                    { name: "毒生肉 (Meat Poisoned)", item1: "生肉 (Raw Meat)", item2: "毒傘菇 (Toadstool)", dc: 12, qty: "1" },
+                    { name: "麻痺生肉 (Meat Tainted)", item1: "生肉 (Raw Meat)", item2: "麻痺香菇 (Parashroom)", dc: 12, qty: "1" },
+                    { name: "毒子彈 (Poison Ammo)", item1: "毒傘菇 (Toadstool)", item2: "空心果 (Huskberry)", dc: 12, qty: "1d4" },
+                    { name: "毒子彈 (Poison Ammo)", item1: "小型骨殼 (Sm Bone Husk)", item2: "紅速龍毒牙 (Ioprey Fang)", dc: 15, qty: "1d4+1" },
+                    { name: "毒瓶 (Poison Coating)", item1: "毒傘菇 (Toadstool)", item2: "空瓶 (Empty Phial)", dc: 12, qty: "1" },
+                    { name: "毒藥劑瓶 (Poison Phial)", item1: "毒傘菇 (Toadstool)", item2: "空瓶 (Empty Phial)", dc: 12, qty: "5" }
+                ],
+                Smith: [
+                    { name: "通常彈 (Normal Ammo)", item1: "空心果 (Huskberry)", item2: "針果 (Needleberry)", dc: 10, qty: "20" },
+                    { name: "麻痺彈 (Paralysis Ammo)", item1: "黃速龍毒牙 (Genprey Fang)", item2: "空心果 (Huskberry)", dc: 12, qty: "1" },
+                    { name: "麻痺彈 (Paralysis Ammo)", item1: "麻痺香菇 (Parashroom)", item2: "空心果 (Huskberry)", dc: 12, qty: "1" },
+                    { name: "毒子彈 (Poison Ammo)", item1: "毒傘菇 (Toadstool)", item2: "空心果 (Huskberry)", dc: 12, qty: "1d4" },
+                    { name: "毒子彈 (Poison Ammo)", item1: "小型骨殼 (Sm Bone Husk)", item2: "紅速龍毒牙 (Ioprey Fang)", dc: 15, qty: "1d4+1" },
+                    { name: "回復彈 Lvl 1 (Recover Lvl 1)", item1: "藥草 (Herb)", item2: "空心果 (Huskberry)", dc: 12, qty: "1d2" },
+                    { name: "回復彈 Lvl 2 (Recover Lvl 2)", item1: "回復彈 Lvl 1 (Recovery Lvl 1)", item2: "蜂蜜 (Honey)", dc: 12, qty: "1" },
+                    { name: "散彈 (Spread Ammo)", item1: "空心果 (Huskberry)", item2: "散彈果 (Scatternut)", dc: 12, qty: "20" },
+                    { name: "散彈 (Spread Ammo)", item1: "空心果 (Huskberry)", item2: "鳥龍種牙齒 (Bird Wyvern Fang)", dc: 15, qty: "20" },
+                    { name: "徹甲榴彈 (Sticky Ammo)", item1: "散彈果 (Scatternut)", item2: "—", dc: 12, qty: "1d6" },
+                    { name: "麻醉彈 (Tranq Ammo)", item1: "眠草 (Sleep Herb)", item2: "空心果 (Huskberry)", dc: 12, qty: "1d4" },
+                    { name: "硬化彈 (Armor Ammo)", item1: "空心果 (Huskberry)", item2: "忍耐種子 (Adamant Seed)", dc: 15, qty: "1d4" },
+                    { name: "鬼人彈 (Demon Ammo)", item1: "空心果 (Huskberry)", item2: "怪力種子 (Might Seed)", dc: 15, qty: "1d4" },
+                    { name: "滅龍彈 (Dragon Ammo)", item1: "大型骨殼 (Lg Bone Husk)", item2: "龍殺果 (Dragon Seed)", dc: 15, qty: "20" },
+                    { name: "火焰彈 (Flaming Ammo)", item1: "火焰草 (Fire Herb)", item2: "空心果 (Huskberry)", dc: 12, qty: "20" },
+                    { name: "貫通彈 (Pierce Ammo)", item1: "空心果 (Huskberry)", item2: "藍速龍毒牙 (Velociprey Fang)", dc: 12, qty: "20" },
+                    { name: "睡眠彈 (Sleep Ammo)", item1: "眠草 (Sleep Herb)", item2: "空心果 (Huskberry)", dc: 15, qty: "1d2" },
+                    { name: "睡眠彈 (Sleep Ammo)", item1: "睡眠魚 (Sleepyfish)", item2: "小型骨殼 (Sm Bone Husk)", dc: 15, qty: "1d2" },
+                    { name: "雷光彈 (Thunder Ammo)", item1: "雷光蟲 (Thunderbug)", item2: "空心果 (Huskberry)", dc: 15, qty: "20" },
+                    { name: "水冷彈 (Water Ammo)", item1: "磨刀魚 (Whetfish)", item2: "空心果 (Huskberry)", dc: 15, qty: "20" },
+                    { name: "擴散彈 (Cluster Ammo)", item1: "空心果 (Huskberry)", item2: "爆裂果 (Bomberry)", dc: 12, qty: "2" },
+                    { name: "擴散彈 (Cluster Ammo)", item1: "小型骨殼 (Sm Bone Husk)", item2: "鳥龍種牙齒 (Bird Wyvern Fang)", dc: 15, qty: "1d4" },
+                    { name: "貫通彈 Lvl 1 (Pierce Lvl 1)", item1: "空心果 (Huskberry)", item2: "藍速龍毒牙 (Velociprey Fang)", dc: 12, qty: "20" },
+                    { name: "貫通彈 Lvl 2 (Pierce Lvl 2)", item1: "小型骨殼 (Sm Bone Husk)", item2: "刺班金槍魚 (Pin Tuna)", dc: 15, qty: "20" },
+                    { name: "貫通彈 Lvl 3 (Pierce Lvl 3)", item1: "大型骨殼 (Lg Bone Husk)", item2: "刺班金槍魚 (Pin Tuna)", dc: 15, qty: "20" },
+                    { name: "斬裂彈 (Slicing Ammo)", item1: "大型骨殼 (Lg Bone Husk)", item2: "磨刀魚 (Whetfish)", dc: 15, qty: "1d4" },
+                    { name: "龍擊彈 (Wyvern Ammo)", item1: "爆裂果 (Bomberry)", item2: "—", dc: 12, qty: "1" }
+                ],
+                Tinker: [
+                    { name: "空氣藥水 (Air Philter)", item1: "催化劑 (Catalyst)", item2: "空氣草 (Airweed)", dc: 15, qty: "1" },
+                    { name: "強效空氣藥水 (Mega Air Philter)", item1: "空氣草 (Airweed)", item2: "狂奔精華 (Dash Extract)", dc: 17, qty: "1" },
+                    { name: "捕獸網 (Net)", item1: "蜘蛛網 (Spiderweb)", item2: "常春藤 (Ivy)", dc: 12, qty: "1" },
+                    { name: "染色彈 (Paintball)", item1: "黏著草 (Sap Plant)", item2: "染色果 (Paintberry)", dc: 10, qty: "1d4" },
+                    { name: "氧氣球 (Oxygen Supply)", item1: "素材彈殼 (Bomb Casing)", item2: "空氣草 (Airweed)", dc: 12, qty: "1" },
+                    { name: "解毒笛 (Antidote Horn)", item1: "號角 (Horn)", item2: "解毒石 (Antiseptic Stone)", dc: 17, qty: "1" },
+                    { name: "硬化笛 (Armor Horn)", item1: "強效硬化藥 (Mega Armorskin)", item2: "中型魔物骨 (Med Monster Bone)", dc: 20, qty: "1" },
+                    { name: "挑釁笛 (Field Horn)", item1: "小型魔物骨 (Sm Monster Bone)", item2: "—", dc: 15, qty: "1" },
+                    { name: "回復笛 (Health Horn)", item1: "生命粉塵 (Lifepowder)", item2: "號角 (Horn)", dc: 17, qty: "1" },
+                    { name: "素材彈殼 (Bomb Casing)", item1: "黏著草 (Sap Plant)", item2: "小石子 (Stone)", dc: 10, qty: "10" },
+                    { name: "糞便彈 (Dung Bomb)", item1: "素材彈殼 (Bomb Casing)", item2: "魔物糞便 (Dung)", dc: 15, qty: "1" },
+                    { name: "閃光彈 (Flash Bomb)", item1: "素材彈殼 (Bomb Casing)", item2: "光蟲 (Flashbug)", dc: 15, qty: "1" },
+                    { name: "毒煙霧彈 (Poison Smoke Bomb)", item1: "素材彈殼 (Bomb Casing)", item2: "毒傘菇 (Toadstool)", dc: 15, qty: "1" },
+                    { name: "煙霧彈 (Smoke Bomb)", item1: "素材彈殼 (Bomb Casing)", item2: "常春藤 (Ivy)", dc: 15, qty: "1" },
+                    { name: "音爆彈 (Sonic Bomb)", item1: "火藥10oz (Gunpowder)", item2: "鳴袋 (Screamer Sac)", dc: 15, qty: "1" },
+                    { name: "麻醉彈 (Tranq Bomb)", item1: "眠草 (Sleep Herb)", item2: "素材彈殼 (Bomb Casing)", dc: 15, qty: "1" },
+                    { name: "噴氣爆彈 (Bounce Bomb)", item1: "小桶裝爆彈 (Sm Barrel Bomb)", item2: "火藥80oz (Gunpowder)", dc: 20, qty: "1" },
+                    { name: "小桶裝爆彈 (Sm Barrel-bomb)", item1: "小空桶 (Small Barrel)", item2: "火藥80oz (Gunpowder)", dc: 12, qty: "1" },
+                    { name: "大桶裝爆彈 (Lg Barrel-bomb)", item1: "火藥160oz (Gunpowder)", item2: "大空桶 (Large Barrel)", dc: 15, qty: "1" },
+                    { name: "網格捕蟲網 (Mega Bug Net)", item1: "捕獸網 (Net)", item2: "任意高階獸骨 (Rare+ bone)", dc: 15, qty: "1" },
+                    { name: "精緻釣竿 (Mega Fishing Pole)", item1: "常春藤 (Ivy)", item2: "任意高階獸骨 (Rare+ bone)", dc: 15, qty: "1" },
+                    { name: "精鋼鐵鎬 (Mega Pickaxe)", item1: "任意高階礦石 (Rare+ mineral)", item2: "任意高階獸骨 (Rare+ bone)", dc: 15, qty: "1" },
+                    { name: "落穴陷阱 (Pitfall Trap)", item1: "捕獸網 (Net)", item2: "陷阱機關 (Trap Tool)", dc: 17, qty: "1" },
+                    { name: "落穴陷阱+ (Pitfall Trap+)", item1: "捕獸網 (Net)", item2: "陷阱機關 (Trap Tool)", dc: 23, qty: "1" },
+                    { name: "麻痺陷阱 (Shock Trap)", item1: "雷光蟲 (Thunderbug)", item2: "陷阱機關 (Trap Tool)", dc: 17, qty: "1" },
+                    { name: "麻痺陷阱+ (Shock Trap+)", item1: "雷光蟲 (Thunderbug)", item2: "陷阱機關 (Trap Tool)", dc: 23, qty: "1" }
+                ],
+                Woodcarver: [
+                    { name: "魚餌 - 破裂赤甲魚 (Arrowana)", item1: "蟋蟀 (Cricket)", item2: "蒼蠅 (Bughopper)", dc: 10, qty: "1" },
+                    { name: "魚餌 - 爆彈魚 (Popfish)", item1: "螢火蟲 (Firefly)", item2: "蒼蠅 (Bughopper)", dc: 12, qty: "1" },
+                    { name: "魚餌 - 刺身魚 (Sushifish)", item1: "蚯蚓 (Worm)", item2: "昆蟲空殼 (Insect Husk)", dc: 12, qty: "1" },
+                    { name: "魚餌 - 刺班金槍魚 (Tuna)", item1: "蚯蚓 (Worm)", item2: "黏著蟲 (Carpenterbug)", dc: 10, qty: "1" },
+                    { name: "魚餌 - 磨刀魚 (Whetfish)", item1: "黏著蟲 (Carpenterbug)", item2: "昆蟲空殼 (Insect Husk)", dc: 12, qty: "1" },
+                    { name: "解毒笛 (Antidote Horn)", item1: "任意獸骨 (Any Bone)", item2: "解毒石 (Antiseptic Stone)", dc: 17, qty: "1" },
+                    { name: "硬化笛 (Armor Horn)", item1: "中型魔物骨 (Med Monster Bone)", item2: "強效硬化藥 (Mega Armorskin)", dc: 20, qty: "1" },
+                    { name: "挑釁笛 (Field Horn)", item1: "任意獸骨 (Any Bone)", item2: "—", dc: 15, qty: "1" },
+                    { name: "回復笛 (Health Horn)", item1: "任意獸骨 (Any Bone)", item2: "生命粉塵 (Lifepowder)", dc: 17, qty: "1" }
+                ]
+            },
+            resources: {
+                bonepile: [
+                    { rarity: "Common", name: "普通獸骨 (Bone)", val: "1 cp", craft: "Y", desc: "常見的骨頭，磨損嚴重且無法辨識原屬魔物。" },
+                    { rarity: "Common", name: "小型骨殼 (Sm Bone Husk)", val: "1 cp", craft: "Y", desc: "骨製彈藥外殼，適合製造高等彈藥。" },
+                    { rarity: "Common", name: "大型骨殼 (Lg Bone Husk)", val: "2 cp", craft: "Y", desc: "能承受高壓爆炸的重弩彈藥外殼。" },
+                    { rarity: "Common", name: "小型魔物骨 (Sm Monster Bone)", val: "10 gp", craft: "Y", desc: "升級武器至「優秀 (Uncommon)」品質必備。" },
+                    { rarity: "Common", name: "鳥龍種獸骨 (Bird Wyvern Bone)", val: "10 gp", craft: "N", desc: "升級防具至「優秀 (Uncommon)」品質必備。" },
+                    { rarity: "Common", name: "巨大獸骨 (Jumbo Bone)", val: "10 gp", craft: "N", desc: "升級防具至「優秀 (Uncommon)」品質必備。" },
+                    { rarity: "Uncommon", name: "獸龍種獸骨 (Brute Bone)", val: "40 gp", craft: "N", desc: "升級防具至「精良 (Rare)」品質必備。" },
+                    { rarity: "Uncommon", name: "中型魔物骨 (Med Monster Bone)", val: "40 gp", craft: "Y", desc: "升級防具至「精良 (Rare)」品質。" },
+                    { rarity: "Uncommon", name: "堅龍骨 (Monster Bone+)", val: "40 gp", craft: "N", desc: "升級武器至「精良 (Rare)」品質。" },
+                    { rarity: "Rare", name: "大型魔物骨 (Lg Monster Bone)", val: "250 gp", craft: "N", desc: "升級防具至「史詩 (Very Rare)」品質。" },
+                    { rarity: "Rare", name: "重龍骨 (Monster Toughbone)", val: "250 gp", craft: "N", desc: "升級武器至「史詩 (Very Rare)」品質。" },
+                    { rarity: "Very Rare", name: "古龍骨 (Elder Dragon Bone)", val: "900 gp", craft: "N", desc: "遠古龍族身上不朽的骨頭。任何防具最終強化。" }
+                ],
+                fish: [
+                    { rarity: "Common", name: "爆裂赤甲魚 (Bomb Arrowana)", val: "1 sp", craft: "Y", desc: "死亡時會引發小型火藥級別爆炸的魚類。" },
+                    { rarity: "Common", name: "破裂赤甲魚 (Burst Arrowana)", val: "1 sp", craft: "Y", desc: "死亡時體內多重氣囊會猛烈破裂的熱帶魚。" },
+                    { rarity: "Common", name: "刺班金槍魚 (Pin Tuna)", val: "2 sp", craft: "Y", desc: "下顎覆蓋細密針刺，常用於貫通彈的製造。" },
+                    { rarity: "Common", name: "睡眠魚 (Sleepyfish)", val: "1 sp", craft: "Y", desc: "富含強烈催眠成分的魚類，用於調合睡眠彈與睡眠瓶。" },
+                    { rarity: "Common", name: "刺身魚 (Sushifish)", val: "1 gp", craft: "N", desc: "極其美味，生吃可立即回復 1d4 HP，並當作口糧。" },
+                    { rarity: "Common", name: "磨刀魚 (Whetfish)", val: "1 gp", craft: "Y", desc: "背鰭硬度宛如天然砥石，極適合用於打磨利刃。" },
+                    { rarity: "Uncommon", name: "爆彈魚 (Popfish)", val: "20 gp", craft: "Y", desc: "死亡時會發出清脆爆鳴聲的珍貴亮色魚類。" },
+                    { rarity: "Uncommon", name: "疲勞魚 (Wanchovy)", val: "20 gp", craft: "N", desc: "攝入此魚的生物必須通過 DC 12 體質豁免，否則增加一級力竭。" },
+                    { rarity: "Rare", name: "深藍割喉魚 (Blue Cutthroat)", val: "550 gp", craft: "N", desc: "散發藍光的魚。採集時受 1 點穿刺傷害。" },
+                    { rarity: "Rare", name: "貪吃鮪魚 (Glutton Tuna)", val: "2 gp", craft: "N", desc: "會吞噬一切。肚子有機會獲得隨機額外的素材或道具。" },
+                    { rarity: "Rare", name: "小黃金魚 (Small Goldenfish)", val: "500 gp", craft: "N", desc: "不可思議地小且全身閃耀金光的魚類。能賣出極高價錢。" },
+                    { rarity: "Very Rare", name: "古代魚 (Ancient Fish)", val: "850 gp", craft: "N", desc: "活化石。可作為升級任何武器或防具至任何品質的萬用素材。" },
+                    { rarity: "Very Rare", name: "長槍鮪魚 (Speartuna)", val: "600 gp", craft: "N", desc: "巨大且珍貴的巨型長槍魚類。" },
+                    { rarity: "Legendary", name: "貪食鮪魚 (Gastronome Tuna)", val: "1000 gp", craft: "N", desc: "烹飪檢定(DC 20)成功後具有法術「英雄宴」等同神效。" }
+                ],
+                insect: [
+                    { rarity: "Common", name: "苦蟲 (Bitterbug)", val: "1 sp", craft: "Y", desc: "生吞有 50% 機率直接解除中毒狀態。" },
+                    { rarity: "Common", name: "蒼蠅 (Bughopper)", val: "5 cp", craft: "Y", desc: "散發出讓魚類瘋狂的氣味。當作釣餌時，釣魚檢定 +1。" },
+                    { rarity: "Common", name: "光蟲/不死蟲 (Carpenterbug)", val: "1 cp", craft: "Y", desc: "體內黏液與銳利下顎使其被當作工匠材料。" },
+                    { rarity: "Common", name: "蟋蟀 (Cricket)", val: "1 cp", craft: "Y", desc: "精力充沛的蟲子。當作釣餌時，釣魚檢定 +2。" },
+                    { rarity: "Common", name: "螢火蟲 (Firefly)", val: "1 cp", craft: "Y", desc: "總是發著微光的蟲。當作釣餌時，釣魚檢定 +1。" },
+                    { rarity: "Common", name: "蜂蜜 (Honey)", val: "1 gp", craft: "Y", desc: "加入任何治療藥水中，可使藥水治療效果額外提升 1d4。" },
+                    { rarity: "Common", name: "昆蟲空殼 (Insect Husk)", val: "1 cp", craft: "Y", desc: "死亡昆蟲的遺骸。可當特種彈藥的彈殼。" },
+                    { rarity: "Common", name: "蛇蜂幼蟲 (Snakebee Larva)", val: "3 sp", craft: "N", desc: "蛇形幼蟲。當作釣餌時，釣魚檢定 +3。" },
+                    { rarity: "Common", name: "蜘蛛網 (Spiderweb)", val: "1 cp", craft: "Y", desc: "極具延展性與黏性的網子，是調合捕獸網的原料。" },
+                    { rarity: "Common", name: "蚯蚓 (Worm)", val: "1 cp", craft: "Y", desc: "當作釣餌時，釣魚檢定 +1。" },
+                    { rarity: "Uncommon", name: "閃光蟲 (Flashbug)", val: "20 gp", craft: "Y", desc: "受到衝擊會散發刺眼強光，調合閃光彈唯一核心材料。" },
+                    { rarity: "Uncommon", name: "神仙蟲 (Godbug)", val: "30 gp", craft: "Y", desc: "壽命千年的神奇昆蟲，常作為高等營養劑與催化劑。" },
+                    { rarity: "Uncommon", name: "雷光蟲 (Thunderbug)", val: "40 gp", craft: "Y", desc: "受到打擊向外放射劇烈電能，調合麻痺陷阱的主料。" },
+                    { rarity: "Rare", name: "櫻花鈴蟲 (Blossom Cricket)", val: "200 gp", craft: "N", desc: "如同花朵般美麗的鈴蟲，其清脆鳴叫聲能敞開最冷酷的心扉。" },
+                    { rarity: "Rare", name: "毒蜘蛛 (Toxic Kumori)", val: "100 gp", craft: "N", desc: "通過 DC 10 毒藥包檢定可榨取成毒液，效力等同「巨蛇毒液 (Serpent Venom)」。" },
+                    { rarity: "Very Rare", name: "帝王蝗蟲 (Emperor Locust)", val: "900 gp", craft: "N", desc: "擁有極其堅硬外殼的巨大蝗蟲王者。" },
+                    { rarity: "Very Rare", name: "大毒蜘蛛 (Large Toxic Kumori)", val: "600 gp", craft: "N", desc: "通過 DC 15 毒藥包檢定可榨取成劇毒，效力等同「飛龍毒液 (Wyvern Poison)」。" },
+                    { rarity: "Very Rare", name: "大角鳳蝶 (Great Hornfly)", val: "750 gp", craft: "N", desc: "擁有巨大巨角與厚重甲殼，卻帶有如蝴蝶般優雅的獨特昆蟲。" },
+                    { rarity: "Legendary", name: "王族馬陸/國王金龜 (King Scarab)", val: "1750 gp", craft: "N", desc: "甲蟲中的皇室階級，擁有光彩奪目的翅膀與最堅硬的外殼。" },
+                    { rarity: "Legendary", name: "幻影蝴蝶 (Phantom Butterfly)", val: "2000 gp", craft: "N", desc: "極少被目擊。其翅膀閃耀著如同璀璨寶石般的光澤。" }
+                ],
+                mineral: [
+                    { rarity: "Common", name: "鎧玉 (Armor Sphere)", val: "10 gp", craft: "N", desc: "將防具強化至 Uncommon 的奇特礦石。" },
+                    { rarity: "Common", name: "地球結晶 (Earth Crystal)", val: "10 gp", craft: "N", desc: "地脈深處高壓形成的結晶，可用於將武器強化至 Uncommon。" },
+                    { rarity: "Common", name: "冰結晶 (Ice Crystal)", val: "6 sp", craft: "Y", desc: "在常溫下也絕不融化的深山堅冰，調合冷飲的絕佳原物料。" },
+                    { rarity: "Common", name: "小石子 (Stone)", val: "1 cp", craft: "Y", desc: "隨處可見的石頭。可當作投擲武器，造成 1 點傷害。" },
+                    { rarity: "Uncommon", name: "堅鎧玉 (Hard Armor Sphere)", val: "40 gp", craft: "N", desc: "將防具升級到 Rare (精良) 品質。可以拿給鐵匠換 2 顆鎧玉。" },
+                    { rarity: "Uncommon", name: "燕雀石 (Machalite Ore)", val: "40 gp", craft: "N", desc: "可用於將武器升級至精良 (Rare) 品質。可以換 2 顆地球結晶。" },
+                    { rarity: "Rare", name: "輝龍石 (Dragonite Ore)", val: "250 gp", craft: "N", desc: "蘊含微弱古龍抗性的稀有赤色金屬礦。武器升級史詩 (Very Rare) 品質。" },
+                    { rarity: "Rare", name: "重鎧玉 (Heavy Armor Sphere)", val: "250 gp", craft: "N", desc: "將防具升級到史詩 (Very Rare) 品質。可換 2 顆堅鎧玉。" },
+                    { rarity: "Rare", name: "生命結晶 (Lifecrystals)", val: "150 gp", craft: "Y", desc: "可用動作激發，散發「照明術」光芒長達一小時後碎裂。" },
+                    { rarity: "Rare", name: "光水晶 (Lightcrystal)", val: "250 gp", craft: "N", desc: "蘊含極亮光輝的水晶，其效果等同毒怪鳥 (Gypceros) 頭上的閃光礦物。" },
+                    { rarity: "Very Rare", name: "靈鶴石 (Carbalite Ore)", val: "900 gp", craft: "N", desc: "極致硬度亮銀礦石。將武器升級到傳說 (Legendary) 級別核心。可換 2 顆輝龍石。" },
+                    { rarity: "Very Rare", name: "王鎧玉 (Royal Armor Sphere)", val: "900 gp", craft: "N", desc: "將防具升級到傳說 (Legendary) 品質的至寶。可換 2 顆重鎧玉。" }
+                ],
+                mushroom: [
+                    { rarity: "Common", name: "藍色香菇 (Blue Mushroom)", val: "1 sp", craft: "Y", desc: "具備活血增強體力化學效果，調合恢復藥水的核心。" },
+                    { rarity: "Common", name: "毒傘菇 (Toadstool)", val: "5 cp", craft: "Y", desc: "生吃能當口糧，但須通過 DC 10 體質豁免否則中毒 24 小時。" },
+                    { rarity: "Common", name: "硝化傘菇 (Nitroshroom)", val: "4 gp", craft: "Y", desc: "揉碎灑在地上可作為無煙無光營火維持燃燒 8 小時。" },
+                    { rarity: "Uncommon", name: "麻痺香菇 (Parashroom)", val: "20 gp", craft: "Y", desc: "含有神經毒素。與生肉共同烹調可做成麻痺誘餌。" },
+                    { rarity: "Rare", name: "捆綁菇 (Bindshroom)", val: "100 gp", craft: "Y", desc: "採集時防護不當須DC 15體質豁免，否則麻痺1分鐘。" },
+                    { rarity: "Rare", name: "興奮菇 (Exciteshroom)", val: "100 gp", craft: "Y", desc: "帶有奇怪味道與刺激性的菇。是回歸球的主要調合素材。" },
+                    { rarity: "Very Rare", name: "混亂妖菇 (Chaos Mushroom)", val: "700 gp", craft: "N", desc: "散發致幻孢子。捏碎使5尺內目標DC 15意志豁免否則「混亂」。" },
+                    { rarity: "Very Rare", name: "心之毒菇 (Dragon Toadstool)", val: "600 gp", craft: "Y", desc: "會汲取人魂的血紅色死寂菌類，調合秘藥的無價之寶。採摘承受1d6黯蝕傷害。" }
+                ],
+                plant: [
+                    { rarity: "Common", name: "解毒草 (Antidote Herb)", val: "1 gp", craft: "Y", desc: "富含解毒素，以動作吃下可以直接解除身上的中毒狀態。" },
+                    { rarity: "Common", name: "爆裂果 (Bomberry)", val: "1 sp", craft: "Y", desc: "受到衝擊會爆炸的小漿果，發出鞭炮般的巨響。" },
+                    { rarity: "Common", name: "仙人掌花 (Cactus Flower)", val: "1 gp", craft: "Y", desc: "富含解毒劑成分，但無法單獨使用，必須配合煉金。" },
+                    { rarity: "Common", name: "龍殺果 (Dragon Seed)", val: "1 sp", craft: "Y", desc: "神祕的種子，傳聞中所有的龍族都極度厭惡這股味道。" },
+                    { rarity: "Common", name: "木天蓼 (Felvine)", val: "1 sp", craft: "N", desc: "將其交給獸人族 (Lynian) 時，他們會受到「魅惑人類」效果影響 1 小時。" },
+                    { rarity: "Common", name: "火焰草 (Fire Herb)", val: "1 gp", craft: "Y", desc: "葉片帶有天然油脂極易起火。強擊瓶和高熱彈藥材料。" },
+                    { rarity: "Common", name: "藥草 (Herb)", val: "1 gp", craft: "Y", desc: "止血生肌的鋸齒野草。以動作吃下可恢復 1d4 生命值。" },
+                    { rarity: "Common", name: "空心果 (Huskberry)", val: "1 sp", craft: "Y", desc: "中空硬漿果皮，製造輕重弩 Normal 通常彈最不可或缺材料。" },
+                    { rarity: "Common", name: "常春藤 (Ivy)", val: "1 sp", craft: "Y", desc: "質地極輕但韌性極度驚人的藤蔓，用於編織高強度繩索網具。" },
+                    { rarity: "Common", name: "針果 (Needleberry)", val: "1 sp", craft: "Y", desc: "滿布細小尖刺的果實，採摘時會受到 1 點穿刺傷害。" },
+                    { rarity: "Common", name: "打消果實 (Nullberry)", val: "10 gp", craft: "N", desc: "吃下這顆果實，能立即治癒身上的任何屬性異常狀態或屬性災厄。" },
+                    { rarity: "Common", name: "染色果 (Paintberry)", val: "1 sp", craft: "Y", desc: "破裂時會釋放出濃烈且帶有強烈臭味的顏料汁液。" },
+                    { rarity: "Common", name: "黏著草 (Sap Plant)", val: "1 sp", craft: "Y", desc: "葉片上覆蓋著極具黏性樹脂的植物。其汁液可用作簡易強力膠。" },
+                    { rarity: "Common", name: "散彈果 (Scatternut)", val: "1 sp", craft: "Y", desc: "一旦受到外力敲擊就會劇烈噴發出內部硬殼的奇異堅果。" },
+                    { rarity: "Common", name: "眠草 (Sleep Herb)", val: "1 sp", craft: "Y", desc: "散發出微弱催眠香氣的植物。大量用於睡眠彈與麻醉玉的調合。" },
+                    { rarity: "Uncommon", name: "空氣草 (Airweed)", val: "20 gp", craft: "Y", desc: "咀嚼它會釋放大量氧氣，允許你在水下正常呼吸長達 1 分鐘。" },
+                    { rarity: "Uncommon", name: "昏暗草根 (Gloamgrass Root)", val: "35 gp", craft: "Y", desc: "富含強效解毒成分的草根，但無法單獨使用，必須配合煉金萃取。" },
+                    { rarity: "Uncommon", name: "暖暖辣椒 (Hot Pepper)", val: "20 gp", craft: "Y", desc: "嚼食效果等同「熱飲」，但因為沒有精煉過，僅能維持 1 小時抗寒效力。" },
+                    { rarity: "Uncommon", name: "雪山草 (Snow Herb)", val: "20 gp", craft: "Y", desc: "嚼食效果等同「冷飲」，但僅能維持 1 小時抗熱效力。" },
+                    { rarity: "Uncommon", name: "熱帶漿果 (Tropical Berry)", val: "40 gp", craft: "Y", desc: "來自焦熱地帶的鮮紅色草莓，具有在極端氣候中生存的特質。" },
+                    { rarity: "Rare", name: "忍耐種子 (Adamant Seed)", val: "100 gp", craft: "Y", desc: "吃下後，你的 AC 提升 +1，持續 1 分鐘。每次短休或長休僅能使用一次。" },
+                    { rarity: "Rare", name: "怪力種子 (Might Seed)", val: "125 gp", craft: "Y", desc: "吃下後你的力量(Str)增加 +2，持續 1 分鐘。藥效結束後獲得一級力竭。" },
+                    { rarity: "Very Rare", name: "大王花 (Dosbiscus)", val: "500 gp", craft: "N", desc: "巨大且色彩斑斕、極度艷麗的罕見開花植物。" },
+                    { rarity: "Very Rare", name: "國王仙人掌 (King Cactus)", val: "650 gp", craft: "N", desc: "採集此植物的生物必須通過 DC 15 體質豁免，否則中毒 24 小時。" },
+                    { rarity: "Very Rare", name: "占星花/落星草 (Stargazer Flower)", val: "800 gp", craft: "N", desc: "開花時花瓣總是仰望星空的奇特植物。其花瓣常用來製作昂貴的染料。" }
+                ]
+            }
+        };
+
+        // 1. Description Helper for Shops
+        window.getItemDescription = function(itemName) {
+            // MH specific items
+            const item = DATABASE.items.find(i => i.name === itemName || i.name.indexOf(itemName) !== -1 || itemName.indexOf(i.name) !== -1);
+            if (item) return item.desc;
+            
+            // MH gatherable resources
+            for (const key in DATABASE.resources) {
+                const res = DATABASE.resources[key].find(r => r.name === itemName || r.name.indexOf(itemName) !== -1 || itemName.indexOf(r.name) !== -1);
+                if (res) return res.desc;
+            }
+
+            // D&D Standard items & Ammo descriptions
+            if (itemName.indexOf("Ammo") !== -1 || itemName.indexOf("彈") !== -1) return "弩砲或弓箭專用的發射彈藥。";
+            if (itemName.indexOf("Coating") !== -1 || itemName.indexOf("瓶") !== -1) return "塗抹於弓箭上的特製塗料。";
+            if (itemName.indexOf("Potion of healing") !== -1) return "飲用後恢復生命值。";
+            if (itemName.indexOf("Alchemist's fire") !== -1) return "投擲命中後使目標著火，每回合造成火焰傷害。";
+            if (itemName.indexOf("Acid (vial)") !== -1) return "投擲命中造成酸蝕傷害。";
+            if (itemName.indexOf("Healer's kit") !== -1) return "用來穩定瀕死生物，不需進行醫療檢定。";
+            if (itemName.indexOf("Abacus") !== -1) return "標準算盤，用於精算與記帳。";
+            if (itemName.indexOf("Bedroll") !== -1 || itemName.indexOf("Tent") !== -1) return "野外長休扎營必備物品。";
+            if (itemName.indexOf("Torch") !== -1) return "點燃後提供明亮照明。";
+            if (itemName.indexOf("Rations") !== -1) return "足夠維持一日生理機能的乾糧。";
+            if (itemName.indexOf("Backpack") !== -1) return "用來裝載各類戰利品的實用包包。";
+            if (itemName.indexOf("Grappling hook") !== -1) return "用於攀登陡峭岩壁或魔物巢穴的高牆。";
+            if (itemName.indexOf("Climber's kit") !== -1) return "提供攀爬陡峭岩壁的優勢與釘具防護。";
+            if (itemName.indexOf("Poisoner's Kit") !== -1) return "精練毒素或塗毒於武器的必備工具包。";
+            if (itemName.indexOf("Herbalism kit") !== -1) return "製作治療藥水與解毒劑的採藥組合。";
+            
+            return "基礎裝備、雜貨或工具。";
+        };
+
+        // 2. Tab Navigation
+        window.switchTab = function(tabId) {
+            // Hide all
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = "tab-btn px-5 py-3 rounded-t-lg font-bold text-sm flex items-center gap-2 transition-all text-slate-400 hover:text-slate-200 border-t-2 border-transparent";
+            });
+
+            // Show selected
+            document.getElementById("pane-" + tabId).classList.remove('hidden');
+            const activeBtn = document.getElementById("tab-" + tabId);
+            activeBtn.className = "tab-btn px-5 py-3 rounded-t-lg font-bold text-sm flex items-center gap-2 transition-all bg-mh-panel text-mh-gold border-t-2 border-mh-gold";
+
+            // Render content dynamically
+            if (tabId === 'weapons') window.filterGear();
+            if (tabId === 'items') window.filterItems();
+            if (tabId === 'shops') window.selectShop('provision');
+            if (tabId === 'crafting') window.loadCraftingRecipes();
+            if (tabId === 'resources') window.selectResourceType('bonepile');
+        };
+
+        // 3. Render Weapons & Armor
+        window.filterGear = function() {
+            const weaponsGrid = document.getElementById('weapons-grid');
+            const armorsGrid = document.getElementById('armors-grid');
+            const query = document.getElementById('gear-search').value.toLowerCase();
+            const filterType = document.getElementById('gear-type-filter').value;
+
+            // Render Weapons
+            weaponsGrid.innerHTML = '';
+            let fWeapons = DATABASE.weapons.filter(w => {
+                const mSearch = w.name.toLowerCase().indexOf(query) !== -1 || w.props.toLowerCase().indexOf(query) !== -1;
+                const mType = filterType === 'all' || (filterType === 'melee' && w.type === 'melee') || (filterType === 'ranged' && w.type === 'ranged');
+                return mSearch && mType;
+            });
+
+            fWeapons.forEach(w => {
+                const c = document.createElement('div');
+                c.className = "bg-mh-dark/70 border border-mh-border rounded-lg p-4 flex flex-col justify-between";
+                const i = w.type === 'ranged' ? "fa-bow-arrow text-emerald-400" : "fa-sword text-amber-400";
+                
+                c.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-slate-200 text-sm"><i class="fa-solid ${i} mr-1"></i> ${w.name}</h4>
+                            <span class="text-mh-gold font-bold text-xs whitespace-nowrap bg-mh-panel border border-mh-gold/30 px-1.5 py-0.5 rounded">${w.cost} GP</span>
+                        </div>
+                        <div class="text-xs text-slate-400 space-y-1 mt-3">
+                            <div class="flex justify-between border-b border-mh-border/50 pb-1"><span>傷害:</span> <span class="text-red-400 font-bold">${w.damage}</span></div>
+                            <div class="flex justify-between border-b border-mh-border/50 pb-1"><span>重量:</span> <span>${w.weight}</span></div>
+                            <div class="pt-1"><span>屬性:</span> <span class="italic text-slate-300 block mt-0.5">${w.props}</span></div>
+                        </div>
+                    </div>
+                `;
+                weaponsGrid.appendChild(c);
+            });
+            if (fWeapons.length === 0) weaponsGrid.innerHTML = '<p class="text-slate-500 italic text-sm">無符合結果</p>';
+
+            // Render Armors
+            armorsGrid.innerHTML = '';
+            let fArmors = DATABASE.armors.filter(a => {
+                const mSearch = a.name.toLowerCase().indexOf(query) !== -1 || a.ac.toLowerCase().indexOf(query) !== -1;
+                const mType = filterType === 'all' || filterType === 'armor';
+                return mSearch && mType;
+            });
+
+            fArmors.forEach(a => {
+                const c = document.createElement('div');
+                c.className = "bg-mh-dark/70 border border-mh-border rounded-lg p-4";
+                let col = "text-emerald-400";
+                if (a.category.indexOf("Medium") !== -1) col = "text-sky-400";
+                if (a.category.indexOf("Heavy") !== -1) col = "text-purple-400";
+                
+                c.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-[10px] uppercase font-bold ${col}">${a.category}</span>
+                        <span class="text-mh-gold font-bold text-xs whitespace-nowrap bg-mh-panel border border-mh-gold/30 px-1.5 py-0.5 rounded">${a.cost} GP</span>
+                    </div>
+                    <h4 class="font-bold text-slate-200 text-sm mb-3">${a.name}</h4>
+                    <div class="text-xs text-slate-400 space-y-1.5">
+                        <div class="flex justify-between border-b border-mh-border/50 pb-1"><span>護甲值 (AC):</span> <span class="font-bold text-sky-300">${a.ac}</span></div>
+                        <div class="flex justify-between border-b border-mh-border/50 pb-1"><span>力量需求:</span> <span>${a.strength}</span></div>
+                        <div class="flex justify-between border-b border-mh-border/50 pb-1"><span>隱匿減益:</span> <span class="text-red-400">${a.stealth}</span></div>
+                        <div class="flex justify-between"><span>重量:</span> <span>${a.weight}</span></div>
+                    </div>
+                `;
+                armorsGrid.appendChild(c);
+            });
+            if (fArmors.length === 0) armorsGrid.innerHTML = '<p class="text-slate-500 italic text-sm">無符合結果</p>';
+
+            // Toggle sections
+            document.getElementById('armors-section').style.display = (filterType === 'melee' || filterType === 'ranged') ? 'none' : 'block';
+            document.getElementById('weapons-section').style.display = (filterType === 'armor') ? 'none' : 'block';
+        };
+
+        // 4. Render Items
+        window.filterItems = function() {
+            const grid = document.getElementById('items-grid');
+            const query = document.getElementById('item-search').value.toLowerCase();
+            const filterRarity = document.getElementById('item-rarity-filter').value;
+
+            grid.innerHTML = '';
+            let filtered = DATABASE.items.filter(i => {
+                const matchQ = i.name.toLowerCase().indexOf(query) !== -1 || i.desc.toLowerCase().indexOf(query) !== -1;
+                const matchR = filterRarity === 'all' || i.rarity === filterRarity;
+                return matchQ && matchR;
+            });
+
+            filtered.forEach(i => {
+                const c = document.createElement('div');
+                c.className = "bg-mh-dark/70 border border-mh-border rounded-lg p-4 flex flex-col justify-between";
+                const isMagic = i.rarity === 'magic';
+                const tColor = isMagic ? "text-purple-400 bg-purple-900/20" : "text-slate-400 bg-slate-800";
+                const badgeText = isMagic ? '🧪 魔法藥效' : '📦 實用道具';
+                
+                c.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${tColor}">${badgeText}</span>
+                            <span class="text-mh-gold font-bold text-xs bg-mh-panel border border-mh-gold/30 px-1.5 py-0.5 rounded">${i.cost} GP</span>
+                        </div>
+                        <h4 class="font-bold text-slate-200 text-sm mb-2">${i.name}</h4>
+                        <p class="text-xs text-slate-400 leading-relaxed mb-3">${i.desc}</p>
+                    </div>
+                    <div class="text-[10px] text-slate-500 pt-2 border-t border-mh-border/50 text-right">
+                        重量: ${i.weight || "—"}
+                    </div>
+                `;
+                grid.appendChild(c);
+            });
+            if (filtered.length === 0) grid.innerHTML = '<p class="text-slate-500 italic text-sm">無符合結果</p>';
+        };
+
+        // 5. Render Shops
+        window.selectShop = function(shopId) {
+            document.querySelectorAll('.shop-tab-btn').forEach(btn => {
+                btn.className = "shop-tab-btn px-4 py-2 rounded-lg bg-mh-dark hover:bg-mh-border text-slate-300 font-bold text-sm border border-mh-border transition";
+            });
+            document.getElementById("shop-tab-" + shopId).className = "shop-tab-btn px-4 py-2 rounded-lg bg-mh-gold text-mh-dark font-bold text-sm transition";
+
+            const t = document.getElementById('shop-title');
+            const d = document.getElementById('shop-desc');
+            const s = document.getElementById('shop-item-search');
+
+            if (shopId === 'provision') {
+                t.innerText = "公會補給所 (Provision Stockpile)";
+                d.innerText = "僅限隸屬於獵人公會成員購買，販售最齊全的狩獵和煉金消耗品。";
+                s.style.display = 'block';
+                window.renderShopItemsList(DATABASE.shops.provision);
+            } else if (shopId === 'general') {
+                t.innerText = "萬能雜貨鋪 (General Store)";
+                d.innerText = "面向大眾的基本雜貨與日常器具，包含各式 D&D 冒險工具與鐵匠鋪的生活齒輪。";
+                s.style.display = 'block';
+                window.renderShopItemsList(DATABASE.shops.general);
+            } else if (shopId === 'ammo') {
+                t.innerText = "彈藥專賣商 (Ammo Vendor)";
+                d.innerText = "輕重弩砲與弓手的天堂！專賣各式特種彈藥與瓶料。";
+                s.style.display = 'block';
+                window.renderShopItemsList(DATABASE.shops.ammo);
+            } else if (shopId === 'traveling') {
+                t.innerText = "流浪商人挑戰物價表 (Traveling Merchant)";
+                d.innerText = "流浪商人販售珍貴魔物素材，價格通常依照魔物挑戰等級 (CR) 計算 (CR高者翻倍)。";
+                s.style.display = 'none'; // hide search for static rule table
+                window.renderTravelingRules();
+            }
+        };
+
+        window.renderShopItemsList = function(items) {
+            const list = document.getElementById('shop-items-list');
+            const query = document.getElementById('shop-item-search').value.toLowerCase();
+            list.innerHTML = '';
+
+            let filtered = items.filter(i => i.name.toLowerCase().indexOf(query) !== -1);
+            filtered.forEach(i => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-mh-border/50 hover:bg-mh-dark/30";
+                const desc = window.getItemDescription(i.name);
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-bold text-slate-200">${i.name}</td>
+                    <td class="py-3 px-4 text-amber-400 font-bold">${i.cost} GP</td>
+                    <td class="py-3 px-4 text-slate-400">${i.weight}</td>
+                    <td class="py-3 px-4 text-slate-400 text-xs italic leading-relaxed">${desc}</td>
+                `;
+                list.appendChild(tr);
+            });
+            if (filtered.length === 0) list.innerHTML = '<tr><td colspan="4" class="py-6 text-center text-slate-500 italic">查無商品</td></tr>';
+        };
+
+        window.filterShopItems = function() {
+            const activeId = document.querySelector('.shop-tab-btn.bg-mh-gold').id.replace('shop-tab-', '');
+            if (activeId !== 'traveling') {
+                window.renderShopItemsList(DATABASE.shops[activeId]);
+            }
+        };
+
+        window.renderTravelingRules = function() {
+            const list = document.getElementById('shop-items-list');
+            list.innerHTML = `
+                <tr class="border-b border-mh-border/50 hover:bg-mh-dark/30">
+                    <td class="py-3 px-4 font-bold text-slate-200">低階魔物素材 (CR 0-3)</td>
+                    <td class="py-3 px-4 text-amber-400 font-bold">100 GP</td>
+                    <td class="py-3 px-4 text-slate-400">視部位</td>
+                    <td class="py-3 px-4 text-slate-400 text-xs italic">大凶豺龍、藍速龍等級素材。若為最劣等素材則折半 (50 GP)。</td>
+                </tr>
+                <tr class="border-b border-mh-border/50 hover:bg-mh-dark/30">
+                    <td class="py-3 px-4 font-bold text-slate-200">中階魔物素材 (CR 4-8)</td>
+                    <td class="py-3 px-4 text-amber-400 font-bold">400 GP</td>
+                    <td class="py-3 px-4 text-slate-400">視部位</td>
+                    <td class="py-3 px-4 text-slate-400 text-xs italic">雌火龍、土砂龍等級素材。若是稀有紅玉價格翻倍 (800 GP)。</td>
+                </tr>
+                <tr class="border-b border-mh-border/50 hover:bg-mh-dark/30">
+                    <td class="py-3 px-4 font-bold text-slate-200">高階魔物素材 (CR 9-13)</td>
+                    <td class="py-3 px-4 text-amber-400 font-bold">2,000 GP</td>
+                    <td class="py-3 px-4 text-slate-400">視部位</td>
+                    <td class="py-3 px-4 text-slate-400 text-xs italic">雷狼龍、火龍等級素材。若是稀有天鱗價格翻倍 (4,000 GP)。</td>
+                </tr>
+                <tr class="border-b border-mh-border/50 hover:bg-mh-dark/30">
+                    <td class="py-3 px-4 font-bold text-slate-200">危險魔物素材 (CR 14-19)</td>
+                    <td class="py-3 px-4 text-amber-400 font-bold">8,000 GP</td>
+                    <td class="py-3 px-4 text-slate-400">視部位</td>
+                    <td class="py-3 px-4 text-slate-400 text-xs italic">滅盡龍、轟龍等強悍掠食者素材。若是其特化部位價格翻倍 (16,000 GP)。</td>
+                </tr>
+                <tr class="border-b border-mh-border/50 hover:bg-mh-dark/30">
+                    <td class="py-3 px-4 font-bold text-slate-200">古龍級素材 (CR 20+)</td>
+                    <td class="py-3 px-4 text-amber-400 font-bold">20,000 GP</td>
+                    <td class="py-3 px-4 text-slate-400">視部位</td>
+                    <td class="py-3 px-4 text-slate-400 text-xs italic">黑龍、煌黑龍傳說素材。無價之寶，極難出現在市集。若是逆鱗價格翻倍 (40,000 GP)。</td>
+                </tr>
+            `;
+        };
+
+        // 6. Render Crafting
+        window.loadCraftingRecipes = function() {
+            const tool = document.getElementById('crafting-tool-filter').value;
+            const container = document.getElementById('recipes-list');
+            container.innerHTML = '';
+
+            const recipes = DATABASE.crafting[tool] || [];
+            recipes.forEach(r => {
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-mh-border/50 hover:bg-mh-dark/30";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-bold text-slate-200">${r.name}</td>
+                    <td class="py-3 px-4 text-emerald-400 font-bold text-xs">${r.item1}</td>
+                    <td class="py-3 px-4 text-sky-400 font-bold text-xs">${r.item2 === "—" ? "無" : r.item2}</td>
+                    <td class="py-3 px-4 text-center font-black text-mh-gold">DC ${r.dc}</td>
+                    <td class="py-3 px-4 text-center text-slate-300">x${r.qty}</td>
+                `;
+                container.appendChild(tr);
+            });
+            if (recipes.length === 0) container.innerHTML = '<tr><td colspan="5" class="py-6 text-center text-slate-500 italic">此工具無可用配方</td></tr>';
+        };
+
+        // 7. Render Resources
+        window.selectResourceType = function(resType) {
+            document.querySelectorAll('.gather-tab-btn').forEach(btn => {
+                btn.className = "gather-tab-btn px-4 py-2 rounded-lg bg-mh-dark border border-mh-border hover:bg-mh-border text-slate-300 font-bold text-sm transition";
+            });
+            document.getElementById("gather-tab-" + resType).className = "gather-tab-btn px-4 py-2 rounded-lg bg-mh-gold text-mh-dark font-bold text-sm transition";
+
+            const tableBody = document.getElementById('gather-loot-table');
+            tableBody.innerHTML = '';
+            const list = DATABASE.resources[resType] || [];
+
+            list.forEach(item => {
+                let badgeColor = "bg-slate-700 text-slate-300";
+                if (item.rarity === "Uncommon") badgeColor = "bg-blue-900 text-blue-200";
+                if (item.rarity === "Rare") badgeColor = "bg-purple-900 text-purple-200 border border-purple-500/30";
+                if (item.rarity === "Very Rare") badgeColor = "bg-orange-950 text-orange-400 border border-orange-500/30";
+                if (item.rarity === "Legendary") badgeColor = "bg-cyan-950 text-cyan-300 border border-cyan-400/50 animate-pulse";
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-mh-dark/40 transition border-b border-mh-border/50";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-bold text-slate-200">${item.name}</td>
+                    <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeColor}">${item.rarity}</span></td>
+                    <td class="py-3 px-4 text-amber-400 font-bold text-xs">${item.val}</td>
+                    <td class="py-3 px-4 text-center text-slate-400 text-xs">${item.craft === "Y" ? "🟢 是" : "—"}</td>
+                    <td class="py-3 px-4 text-slate-400 text-xs italic leading-relaxed">${item.desc}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        };
+
+        window.onload = function() {
+            window.switchTab('weapons'); // default tab
+        };
+    </script>
+</body>
+</html>
