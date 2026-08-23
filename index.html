@@ -41,8 +41,8 @@
 </head>
 <body class="h-screen w-screen flex flex-col overflow-hidden">
 
-  <!-- 1. 驗證閘道（未登入 / 驗證中狀態） -->
-  <div id="login-gateway" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
+  <!-- 1. 驗證閘道（已暫時隱藏） -->
+  <div id="login-gateway" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md hidden">
     <div class="max-w-md w-full bg-[#1e1e24] border border-gold/40 rounded-xl p-8 shadow-2xl text-center relative overflow-hidden">
       <!-- 奇幻裝飾圖騰風格頂條 -->
       <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#d4af37] to-transparent"></div>
@@ -66,8 +66,8 @@
     </div>
   </div>
 
-  <!-- 2. 工作區主介面（驗證成功後顯示） -->
-  <div id="app-workspace" class="hidden h-full w-full flex flex-col md:flex-row overflow-hidden">
+  <!-- 2. 工作區主介面（直接顯示） -->
+  <div id="app-workspace" class="h-full w-full flex flex-col md:flex-row overflow-hidden">
     
     <!-- 手機 / 平板端 頂部 Header -->
     <header class="md:hidden flex items-center justify-between px-4 py-3 bg-[#1e1e24] border-b border-gold/30 shrink-0">
@@ -108,165 +108,62 @@
       <nav class="flex-1 overflow-y-auto p-4 space-y-1.5" id="tools-menu">
         <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-2">MH5e 規則與資料庫</div>
         
-        <button onclick="loadTool('./tools/mh5e-weapons.html', this)" class="menu-item w-full flex items-center gap-3 px-3.5 py-3 rounded-lg bg-[#25252d] text-gold hover:bg-[#25252d] hover:text-gold transition-colors active:bg-[#2a2a35] text-left min-h-[44px] active">
+        <button onclick="loadTool('./tools/weapons.html', this)" class="menu-item w-full flex items-center gap-3 px-3.5 py-3 rounded-lg bg-[#25252d] text-gold hover:bg-[#25252d] hover:text-gold transition-colors active:bg-[#2a2a35] text-left min-h-[44px] active">
           <i class="fa-solid fa-shield-halved w-5 text-center text-amber-400"></i>
           <span class="text-sm font-medium">武器裝備與音符規則</span>
         </button>
 
-        <button onclick="loadTool('./tools/resource-gatherer.html', this)" class="menu-item w-full flex items-center gap-3 px-3.5 py-3 rounded-lg text-gray-300 hover:bg-[#25252d] hover:text-gold transition-colors active:bg-[#2a2a35] text-left min-h-[44px]">
+        <button onclick="loadTool('./tools/gatherer.html', this)" class="menu-item w-full flex items-center gap-3 px-3.5 py-3 rounded-lg text-gray-300 hover:bg-[#25252d] hover:text-gold transition-colors active:bg-[#2a2a35] text-left min-h-[44px]">
           <i class="fa-solid fa-compass w-5 text-center text-emerald-400"></i>
           <span class="text-sm font-medium">地區資源採集助手</span>
         </button>
 
-        <button onclick="loadTool('./tools/mh5e-compendium.html', this)" class="menu-item w-full flex items-center gap-3 px-3.5 py-3 rounded-lg text-gray-300 hover:bg-[#25252d] hover:text-gold transition-colors active:bg-[#2a2a35] text-left min-h-[44px]">
+        <button onclick="loadTool('./tools/compendium.html', this)" class="menu-item w-full flex items-center gap-3 px-3.5 py-3 rounded-lg text-gray-300 hover:bg-[#25252d] hover:text-gold transition-colors active:bg-[#2a2a35] text-left min-h-[44px]">
           <i class="fa-solid fa-book-bookmark w-5 text-center text-sky-400"></i>
           <span class="text-sm font-medium">魔物獵人 D&D 資料百科</span>
         </button>
 
-        <button onclick="loadTool('./tools/status-conditions.html', this)" class="menu-item w-full flex items-center gap-3 px-3.5 py-3 rounded-lg text-gray-300 hover:bg-[#25252d] hover:text-gold transition-colors active:bg-[#2a2a35] text-left min-h-[44px]">
+        <button onclick="loadTool('./tools/status.html', this)" class="menu-item w-full flex items-center gap-3 px-3.5 py-3 rounded-lg text-gray-300 hover:bg-[#25252d] hover:text-gold transition-colors active:bg-[#2a2a35] text-left min-h-[44px]">
           <i class="fa-solid fa-skull-crossbones w-5 text-center text-rose-400"></i>
           <span class="text-sm font-medium">異常狀態速查手冊</span>
-        </button>
-
-        <div class="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mt-4 mb-2">跑團輔助工具</div>
-
-        <button onclick="loadTool('./tools/hp-tracker.html', this)" class="menu-item w-full flex items-center gap-3 px-3.5 py-3 rounded-lg text-gray-300 hover:bg-[#25252d] hover:text-gold transition-colors active:bg-[#2a2a35] text-left min-h-[44px]">
-          <i class="fa-solid fa-heart-pulse w-5 text-center text-red-400"></i>
-          <span class="text-sm font-medium">血量與狀態追蹤器</span>
         </button>
       </nav>
 
       <!-- 側邊欄底部：使用者資訊與登出 (Desktop) -->
       <div class="p-4 border-t border-gold/20 bg-[#121214] flex items-center justify-between">
         <div class="flex items-center gap-3 overflow-hidden">
-          <img id="user-avatar-desktop" class="w-9 h-9 rounded-full border border-gold shrink-0" src="" alt="Avatar" />
+          <div class="w-9 h-9 rounded-full border border-gold shrink-0 bg-[#25252d] flex items-center justify-center text-gold">
+            <i class="fa-solid fa-user"></i>
+          </div>
           <div class="truncate">
-            <div id="user-name" class="text-sm font-medium text-gray-200 truncate">冒險者</div>
-            <div id="user-email" class="text-xs text-gray-500 truncate">email@example.com</div>
+            <div id="user-name" class="text-sm font-medium text-gray-200 truncate">測試冒險者 (免登入)</div>
+            <div id="user-email" class="text-xs text-gray-500 truncate">test@example.com</div>
           </div>
         </div>
-        <button onclick="handleLogout()" title="登出" class="text-gray-400 hover:text-red-400 p-2 rounded-lg transition-colors shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center">
-          <i class="fa-solid fa-right-from-bracket text-lg"></i>
+        <button onclick="handleLogout()" title="重新整理" class="text-gray-400 hover:text-gold p-2 rounded-lg transition-colors shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center">
+          <i class="fa-solid fa-rotate text-lg"></i>
         </button>
       </div>
     </aside>
 
     <!-- 右側/下方的 Iframe 工具載入區域 -->
     <main class="flex-1 h-full w-full bg-[#121214] relative iframe-container">
-      <iframe id="tool-viewport" class="w-full h-full border-none block" src="./tools/mh5e-weapons.html" title="Tool Workspace"></iframe>
+      <iframe id="tool-viewport" class="w-full h-full border-none block" src="./tools/weapons.html" title="Tool Workspace"></iframe>
     </main>
   </div>
 
   <!-- Firebase Auth SDK (v10 Modular via CDN Script) -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { 
-      getAuth, 
-      GoogleAuthProvider, 
-      signInWithPopup, 
-      signOut, 
-      onAuthStateChanged 
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-    // FIXME: 請替換為您的 Firebase 專案設定
-    const firebaseConfig = {
-  apiKey: "AIzaSyDMWmRswqGugxSUkMicYRcyx-FtowmUFXA",
-  authDomain: "mageland-51e9f.firebaseapp.com",
-  projectId: "mageland-51e9f",
-  storageBucket: "mageland-51e9f.firebasestorage.app",
-  messagingSenderId: "726252407889",
-  appId: "1:726252407889:web:6065fe68f3e54ee8fc3c70",
-  measurementId: "G-SZN7RBQR2T"
-};
-
-    // 初始化 Firebase
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-
-    // 將 Auth 方法掛載至 window 供 HTML 按鈕呼叫
+    // 登入驗證暫時跳過，直接開啟測試工作區
+    console.log("【開發測試模式】登入驗證已暫時關閉，可直接使用工作區。");
+    
     window.handleGoogleLogin = async () => {
-      const spinner = document.getElementById('auth-spinner');
-      try {
-        spinner.classList.remove('hidden');
-        await signInWithPopup(auth, provider);
-      } catch (error) {
-        console.error("Login Error:", error);
-        alert("Google 登入失敗：" + error.message);
-        spinner.classList.add('hidden');
-      }
+      alert("目前為免登入測試模式，直接使用工作區即可。");
     };
 
     window.handleLogout = () => {
-      signOut(auth).then(() => {
-        window.location.reload();
-      });
+      window.location.reload();
     };
-
-    // SHA-256 轉碼函式 (Web Crypto API)
-    async function sha256(message) {
-      const msgBuffer = new TextEncoder().encode(message);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    // 驗證 Email 是否在白名單內
-    async function verifyWhitelist(email) {
-      try {
-        const cleanEmail = email.trim().toLowerCase();
-        const emailHash = await sha256(cleanEmail);
-
-        // 讀取 whitelist.json（帶時間戳避免快取）
-        const response = await fetch('./whitelist.json?t=' + Date.now());
-        if (!response.ok) {
-          throw new Error('無法讀取白名單檔案');
-        }
-        const whitelist = await response.json();
-
-        return whitelist.includes(emailHash);
-      } catch (error) {
-        console.error("Whitelist Verification Error:", error);
-        return false;
-      }
-    }
-
-    // 監聽 Firebase 登入狀態變更
-    onAuthStateChanged(auth, async (user) => {
-      const loginGateway = document.getElementById('login-gateway');
-      const appWorkspace = document.getElementById('app-workspace');
-      const spinner = document.getElementById('auth-spinner');
-
-      if (user) {
-        spinner.classList.remove('hidden');
-        const isAuthorized = await verifyWhitelist(user.email);
-
-        if (isAuthorized) {
-          // 驗證成功：顯示工作區
-          loginGateway.classList.add('hidden');
-          appWorkspace.classList.remove('hidden');
-
-          // 更新使用者 UI 資訊
-          document.getElementById('user-name').textContent = user.displayName || '冒險者';
-          document.getElementById('user-email').textContent = user.email;
-          if (user.photoURL) {
-            document.getElementById('user-avatar-desktop').src = user.photoURL;
-            document.getElementById('user-avatar-mobile').src = user.photoURL;
-          }
-        } else {
-          // 驗證失敗：跳出提示並強制登出
-          alert(`存取被拒：帳號 (${user.email}) 未在團友白名單中。`);
-          await signOut(auth);
-          loginGateway.classList.remove('hidden');
-          appWorkspace.classList.add('hidden');
-        }
-      } else {
-        // 未登入狀態
-        loginGateway.classList.remove('hidden');
-        appWorkspace.classList.add('hidden');
-      }
-      spinner.classList.add('hidden');
-    });
   </script>
 
   <!-- 全域 UI 操作邏輯 -->

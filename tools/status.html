@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>D&D 2024 & 魔物獵人 異常狀態速查典籍</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Cinzel for RPG Titles, Noto Sans TC for High Readability Body Text -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --parchment-bg: #FAF6ED;
+            --parchment-card: #FFFFFF;
+            --parchment-border: #D4C39D;
+            --ink-primary: #1C1917;
+            --ink-secondary: #44403C;
+            --gold-accent: #B45309;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #0F0D0B;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(180, 83, 9, 0.18), transparent 75%),
+                radial-gradient(circle at 50% 100%, rgba(120, 53, 15, 0.15), transparent 80%),
+                linear-gradient(to bottom, #17120E, #0A0806);
+            color: var(--ink-primary);
+            min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .font-cinzel {
+            font-family: 'Cinzel', 'Noto Sans TC', serif;
+        }
+
+        /* High contrast Parchment Card Box */
+        .parchment-box {
+            background-color: #FAF8F2;
+            border: 1px solid var(--parchment-border);
+            box-shadow: 0 4px 15px -2px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(212, 195, 157, 0.15);
+            position: relative;
+        }
+
+        /* Decorative Corner Ornaments */
+        .corner-ornament {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-color: #B45309;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        .corner-tl { top: 4px; left: 4px; border-top: 2px solid; border-left: 2px solid; }
+        .corner-tr { top: 4px; right: 4px; border-top: 2px solid; border-right: 2px solid; }
+        .corner-bl { bottom: 4px; left: 4px; border-bottom: 2px solid; border-left: 2px solid; }
+        .corner-br { bottom: 4px; right: 4px; border-bottom: 2px solid; border-right: 2px solid; }
+
+        /* Hide scrollbars for mobile tab slider */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* High Legibility Keyword Badges */
+        .kw-advantage {
+            background-color: #DCFCE7;
+            color: #14532D;
+            border: 1px solid #86EFAC;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            display: inline-block;
+            line-height: 1.2;
+        }
+        .kw-disadvantage {
+            background-color: #FEE2E2;
+            color: #7F1D1D;
+            border: 1px solid #FCA5A5;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            display: inline-block;
+            line-height: 1.2;
+        }
+        .kw-highlight {
+            background-color: #FEF3C7;
+            color: #78350F;
+            border: 1px solid #FDE047;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            display: inline-block;
+            line-height: 1.2;
+        }
+
+        /* Active Wax Tab Styling */
+        .wax-tab {
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .wax-tab.active {
+            background: linear-gradient(135deg, #991B1B, #7F1D1D);
+            color: #FEF08A;
+            border-color: #F59E0B;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-stone-900 pb-12 antialiased">
+
+    <!-- Header Banner -->
+    <header class="border-b border-amber-900/60 bg-stone-950/95 text-amber-100 sticky top-0 z-50 shadow-2xl backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 py-3 flex flex-col gap-3">
+            
+            <!-- Top Row: Title & View Mode -->
+            <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-amber-600 via-red-900 to-stone-950 border border-amber-400/80 flex items-center justify-center shadow-lg text-amber-200 text-lg sm:text-xl font-cinzel font-bold shrink-0">
+                        ⚔️
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-2xl font-bold font-cinzel tracking-wide text-amber-200 drop-shadow">
+                            異常狀態速查典籍
+                        </h1>
+                        <p class="text-[10px] sm:text-xs text-amber-400/70 tracking-widest uppercase font-medium">
+                            D&D 2024 & Monster Hunter Compendium
+                        </p>
+                    </div>
+                </div>
+
+                <!-- View Switcher -->
+                <div class="flex border border-amber-800/80 bg-stone-900/90 rounded-lg p-1 text-xs shrink-0">
+                    <button onclick="setViewMode('cards')" id="view-cards-btn" class="px-2.5 py-1.5 rounded bg-amber-700/90 text-amber-100 font-bold flex items-center gap-1 min-h-[36px]" title="典籍卡牌模式">
+                        🎴 <span class="hidden sm:inline">卡牌</span>
+                    </button>
+                    <button onclick="setViewMode('table')" id="view-table-btn" class="px-2.5 py-1.5 rounded text-amber-400/80 hover:text-amber-200 flex items-center gap-1 min-h-[36px]" title="清單模式">
+                        📜 <span class="hidden sm:inline">清單</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bottom Row: Search & Responsive Category Filter Tabs -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                <!-- Search Scroll Input -->
+                <div class="relative flex-1">
+                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-amber-600/80 text-sm">
+                        🔍
+                    </span>
+                    <input type="text" id="search-input" placeholder="搜尋狀態名稱、關鍵字 (例如：優勢, 敏捷)..." 
+                           class="w-full pl-9 pr-3 py-2 text-sm rounded-lg bg-stone-900 text-amber-100 border border-amber-800/80 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 placeholder-amber-700/60 font-sans shadow-inner min-h-[42px]"
+                           oninput="renderView()">
+                </div>
+
+                <!-- Category Tabs (Horizontal Scrollable on Mobile) -->
+                <div class="overflow-x-auto no-scrollbar -mx-3 px-3 sm:mx-0 sm:px-0">
+                    <div class="inline-flex rounded-lg border border-amber-900/80 bg-stone-900/90 p-1 text-xs font-medium min-w-full sm:min-w-0">
+                        <button onclick="setCategory('all')" id="tab-all" class="wax-tab active px-3 py-2 rounded border border-transparent font-bold min-h-[38px] flex-1 text-center">
+                            全部 (<span id="count-all">26</span>)
+                        </button>
+                        <button onclick="setCategory('dnd2024')" id="tab-dnd2024" class="wax-tab px-3 py-2 rounded border border-transparent text-amber-200/80 hover:text-amber-100 min-h-[38px] flex-1 text-center">
+                            🐉 D&D 2024 (<span id="count-dnd">19</span>)
+                        </button>
+                        <button onclick="setCategory('mh')" id="tab-mh" class="wax-tab px-3 py-2 rounded border border-transparent text-amber-200/80 hover:text-amber-100 min-h-[38px] flex-1 text-center">
+                            🍖 魔物獵人 (<span id="count-mh">7</span>)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 mt-4 sm:mt-6 flex-1 w-full">
+
+        <!-- Top Status Summary Bar -->
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-4 px-3.5 py-2.5 rounded-lg border border-amber-900/50 bg-stone-950/80 text-amber-200/90 text-xs sm:text-sm font-sans shadow-md">
+            <div class="flex items-center gap-2">
+                <span class="text-amber-500 font-bold">✨ 顯示條目：</span>
+                <span id="match-count" class="font-cinzel text-amber-400 font-bold text-base">26</span> 項
+                <span id="bookmarked-indicator" class="hidden text-amber-300 ml-1 bg-amber-950/90 border border-amber-700/60 px-2 py-0.5 rounded text-xs">
+                    ★ 已釘選 <span id="pin-count">0</span>
+                </span>
+            </div>
+            
+            <div class="flex items-center gap-3 text-xs">
+                <span class="inline-flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-red-800 border border-amber-400 shrink-0"></span> D&D 2024
+                </span>
+                <span class="inline-flex items-center gap-1.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-800 border border-emerald-400 shrink-0"></span> 魔物獵人
+                </span>
+            </div>
+        </div>
+
+        <!-- Main Content Display Box -->
+        <div id="display-container" class="w-full">
+            <!-- Dynamic Content Rendered via JS -->
+        </div>
+
+    </main>
+
+    <footer class="mt-10 border-t border-amber-900/40 bg-stone-950/90 text-amber-500/70 text-center py-6 text-xs px-4">
+        <p class="font-cinzel tracking-widest text-amber-400/90 font-bold mb-1">D&D 2024 & MONSTER HUNTER RULE COMPENDIUM</p>
+        <p>提供冒險者與地下城主最清晰流暢的實戰速查手冊。</p>
+    </footer>
+
+    <script>
+        // Core Dataset - Refined for maximum clarity (Without Cure Column)
+        const conditions = [
+            // ==================== 魔物獵人客製 (Monster Hunter Custom) ====================
+            {
+                id: 'bloodblight',
+                name: '劫血異常 (Bloodblight)',
+                category: 'mh',
+                categoryLabel: '魔物獵人客製',
+                type: '狀態',
+                mechanics: [
+                    '若自回合開始後未對敵對生物進行攻擊或造成傷害，回合結束時損失 **1d10** 生命值。',
+                    '受到治療恢復生命值時，恢復量減半。'
+                ]
+            },
+            {
+                id: 'dragonblight',
+                name: '龍屬性異常 (Dragonblight)',
+                category: 'mh',
+                categoryLabel: '魔物獵人客製',
+                type: '狀態',
+                mechanics: [
+                    '無法透過法術或攻擊造成 **冷凍、火焰、閃電、壞死或雷霆** 傷害。',
+                    '無法對其他生物施加以下狀態：**失明、魅惑、麻痺、中毒或石化**。'
+                ]
+            },
+            {
+                id: 'iceblight',
+                name: '冰屬性異常 (Iceblight)',
+                category: 'mh',
+                categoryLabel: '魔物獵人客製',
+                type: '疾病',
+                mechanics: [
+                    '無法使用 **反應 (Reactions)**。',
+                    '移動速度減半。',
+                    '每回合最多只能進行 **一次攻擊**。'
+                ]
+            },
+            {
+                id: 'slick',
+                name: '滑溜 (Slick)',
+                category: 'mh',
+                categoryLabel: '魔物獵人客製',
+                type: '狀態',
+                mechanics: [
+                    '**敏捷豁免** 檢定具有 **劣勢**。',
+                    '移動速度上限限制為 **半速**。',
+                    '進行 **擒抱** 檢定時具有 **劣勢**。',
+                    '使用 **體操 (Acrobatics)** 技巧脫離擒抱時具有 **優勢**。'
+                ]
+            },
+            {
+                id: 'tarred',
+                name: '焦油附著 (Tarred)',
+                category: 'mh',
+                categoryLabel: '魔物獵人客製',
+                type: '狀態 / 區域',
+                mechanics: [
+                    '【生物】陷入 **束縛 (Restrained)** 狀態，免疫被繳械，無法使用非手中持有的武器或物品。',
+                    '【物品】焦油物品無法被移動或使用。',
+                    '【區域】焦油覆蓋區域視為 **難行地形**。',
+                    '【引燃效果】受到火焰傷害時狀態結束並引燃。點燃目標每回合開始受 **1d10 (6) 火傷**；區域引燃持續燃燒 **1 分鐘**。'
+                ]
+            },
+            {
+                id: 'thunderblight',
+                name: '雷屬性異常 (Thunderblight)',
+                category: 'mh',
+                categoryLabel: '魔物獵人客製',
+                type: '狀態',
+                mechanics: [
+                    '避免陷入 **眩暈 (Stunned)** 狀態的豁免檢定具 **劣勢**。',
+                    '若受 **閃電或雷霆** 傷害，需進行 **DC 10 體質豁免**，失敗則陷入眩暈直至其下個回合結束。'
+                ]
+            },
+            {
+                id: 'waterblight',
+                name: '水屬性異常 (Waterblight)',
+                category: 'mh',
+                categoryLabel: '魔物獵人客製',
+                type: '毒素',
+                mechanics: [
+                    '耐力被抽乾。',
+                    '在其回合中，只能選擇使用 **動作 (Action)** 或 **附贈動作 (Bonus Action)** 其中之一，不可兩者皆用。'
+                ]
+            },
+
+            // ==================== D&D 2024 官方 (D&D 2024 Official) ====================
+            {
+                id: 'exhaustion-2024',
+                name: '力竭 (Exhaustion)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態 (可疊加)',
+                mechanics: [
+                    '【力竭等級】可疊加，每次獲得增加 1 層。累計至 **6 級將立即死亡**。',
+                    '【D20 檢定懲罰】進行任何 D20 檢定時，減去（**力竭等級 × 2**）數值。',
+                    '【速度降低】移動速度減少（**力竭等級 × 5**）尺。'
+                ]
+            },
+            {
+                id: 'invisible-2024',
+                name: '隱形 (Invisible)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態',
+                mechanics: [
+                    '【出其不意】若投擲先攻時具有隱形狀態，**先攻檢定具有優勢**。',
+                    '【隱蔽】需要能看見目標的效應不會影響你（除非源頭能特別看見你）。裝備一併隱藏。',
+                    '【攻擊影響】以你為目標的攻擊檢定 **具劣勢**，你進行的攻擊檢定 **具優勢**。'
+                ]
+            },
+            {
+                id: 'incapacitated-2024',
+                name: '失能 (Incapacitated)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態',
+                mechanics: [
+                    '【無法行動】無法執行任何 **動作、附贈動作以及反應**。',
+                    '【無法專注】專注會立即被打斷。',
+                    '【無法說話】無法發聲或說話。',
+                    '【措手不及】若在失能期間投擲先攻，**先攻檢定具有劣勢**。'
+                ]
+            },
+            {
+                id: 'grappled-2024',
+                name: '被擒 (Grappled)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態',
+                mechanics: [
+                    '【速度歸零】速度變成 0，且無法被增加。',
+                    '【攻擊影響】除擒抱者外，對其他任何目標進行的攻擊檢定 **均具有劣勢**。',
+                    '【帶動】擒抱者移動時可拖曳或承載你（每移動 1 尺需額外消耗 1 尺移動力；若體型為微型或小於擒抱者 2 級以上則免額外消耗）。',
+                    '【限制】擒抱者至多只能抓體型大一級的生物（如中型抓大型），且必須空出一隻手。'
+                ]
+            },
+            {
+                id: 'stunned-2024',
+                name: '震懾 (Stunned)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態',
+                mechanics: [
+                    '【失能】陷入 **失能** 狀態，無法執行動作、附贈動作與反應。',
+                    '【豁免失敗】**力量豁免** 與 **敏捷豁免** 檢定 **自動失敗**。',
+                    '【受擊劣勢】以你為目標的攻擊檢定 **具有優勢**。'
+                ]
+            },
+            {
+                id: 'poisoned-2024',
+                name: '中毒 (Poisoned)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態',
+                mechanics: [
+                    '【屬性檢定與攻擊影響】所進行的所有 **攻擊檢定** 與 **屬性檢定** 均具有 **劣勢**。'
+                ]
+            },
+            {
+                id: 'frightened-2024',
+                name: '恐慌 (Frightened)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態',
+                mechanics: [
+                    '【屬性檢定與攻擊影響】只要恐懼源在視線內，進行的 **屬性檢定** 與 **攻擊檢定** 具 **劣勢**。',
+                    '【無法靠近】無法自願地向著靠近恐懼源的方向移動。'
+                ]
+            },
+            {
+                id: 'unconscious-2024',
+                name: '昏迷 (Unconscious)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態',
+                mechanics: [
+                    '【無力】陷入 **失能** 與 **伏地** 狀態，扔下手持物品。結束時維持伏地。',
+                    '【速度 0】速度為 0 且無法改變。**力量與敏捷豁免自動失敗**。',
+                    '【攻擊與重擊】對你發動的攻擊具 **優勢**。若攻擊者位於 **5 尺內**，命中直接變為 **重擊**。',
+                    '【無意識】無法感知周圍的事物。'
+                ]
+            },
+            {
+                id: 'deafened-2024',
+                name: '耳聾 (Deafened)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態',
+                mechanics: [
+                    '【聽不見】無法聽見任何聲音，任何依賴聽覺進行的屬性檢定（如察覺檢定）**自動失敗**。'
+                ]
+            },
+            {
+                id: 'prone-2024',
+                name: '伏地 (Prone)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態',
+                mechanics: [
+                    '【阻礙移動】唯二移動選項為匍匐移動，或消耗 **當前最大速度一半（向下取整）** 起立。速度為 0 時無法起立。',
+                    '【攻擊影響】你進行的攻擊具有 **劣勢**。',
+                    '【受擊修正】若攻擊者位於 **5 尺內對你攻擊具優勢**；若超過 5 尺 **對你攻擊具劣勢**。'
+                ]
+            },
+            {
+                id: 'restrained-2024',
+                name: '束縛 (Restrained)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態',
+                mechanics: [
+                    '【速度歸零】速度變成 0，且無法被增加。',
+                    '【攻擊影響】以你為目標的攻擊檢定 **具有優勢**，你進行的攻擊檢定 **具有劣勢**。',
+                    '【豁免影響】進行 **敏捷豁免** 檢定時具有 **劣勢**。'
+                ]
+            },
+            {
+                id: 'blinded-2024',
+                name: '目盲 (Blinded)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態',
+                mechanics: [
+                    '【看不見】無法視物，**自動失敗** 於任何需要視覺進行的屬性檢定。',
+                    '【攻擊影響】以你為目標的攻擊檢定 **具有優勢**，你進行的攻擊檢定 **具有劣勢**。'
+                ]
+            },
+            {
+                id: 'paralyzed-2024',
+                name: '麻痺 (Paralyzed)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態',
+                mechanics: [
+                    '【失能與速度 0】陷入 **失能** 狀態，速度變成 0 且無法增加。',
+                    '【豁免失敗】**力量與敏捷豁免檢定自動失敗**。',
+                    '【自動重擊】以你為目標的攻擊具 **優勢**。若攻擊者位於 **5 尺內**，命中直接變為 **重擊**。'
+                ]
+            },
+            {
+                id: 'charmed-2024',
+                name: '魅惑 (Charmed)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態',
+                mechanics: [
+                    '【無法傷害魅惑源】無法攻擊魅惑源，也無法將其作為傷害性能力或魔法效應的對象。',
+                    '【社交優勢】魅惑源對你進行的任何 **社交屬性檢定均具有優勢**。'
+                ]
+            },
+            {
+                id: 'petrified-2024',
+                name: '石化 (Petrified)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態',
+                mechanics: [
+                    '【化為石質】軀體與非魔法物品變為石質，重量變為 **10 倍**，停止老化。',
+                    '【失能與速度 0】陷入 **失能**，速度變 0。**力量與敏捷豁免自動失敗**。',
+                    '【攻擊與抗性】攻擊者具 **優勢**。獲得 **所有傷害抗性**，且 **免疫中毒** 狀態。'
+                ]
+            },
+            {
+                id: 'shapeshifting-2024',
+                name: '變形 (Shape-shifting)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態 / 效應',
+                mechanics: [
+                    '【效果延續】身上發生的狀態、法術、詛咒會持續帶至新形態。若死亡則變回真實形態。',
+                    '【能力與裝備】變形後職業與種族能力、專長等暫時消失（職業持續效果如天生術法立即結束）。不會自動變出裝備。'
+                ]
+            },
+            {
+                id: 'bloodied-2024',
+                name: '血腥 / 浴血 (Bloodied)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態',
+                mechanics: [
+                    '【生命門檻】當生物當前生命值降至 **最大生命值的 50% 或更少** 時，自動陷入此狀態。',
+                    '【能力連動】許多職業能力（如生命領域牧師引導神力）或怪物特質會在目標血腥時觸發額外效果。'
+                ]
+            },
+            {
+                id: 'dead-2024',
+                name: '死亡 (Dead)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態',
+                mechanics: [
+                    '【無法自然恢復】沒有生命值，除非先獲得復活魔法，否則無法恢復生命值。',
+                    '【靈魂自由】靈魂前往外層位面，知道施法者身份並可選擇拒絕復活。',
+                    '【復活保留效應】帶著未過期狀態復活；力竭等級減少 1 級；自動解除所有魔法物品同調 (Attunement)。'
+                ]
+            },
+            {
+                id: 'hide-2024',
+                name: '隱蔽 / 躲藏 (Hide)',
+                category: 'dnd2024',
+                categoryLabel: 'D&D 2024 官方',
+                type: '狀態',
+                mechanics: [
+                    '【位置隱蔽】其他生物無法得知精確位置。你的 **攻擊與先攻檢定具有優勢**。',
+                    '【解除條件】發起攻擊、發出超過耳語聲音（含具語音成分施法）、被敵方直視（掩體外）、被搜索/被動感知/盲視/震顫感知發現時解除。',
+                    '【移動與戰鬥】可在掩體間移動，結束回合時若位於掩體外則自動失效。戰鬥中敵人知道你最後消失的位置。'
+                ]
+            }
+        ];
+
+        let currentCategory = 'all';
+        let viewMode = 'cards';
+        let pinnedIds = new Set();
+
+        function setCategory(category) {
+            currentCategory = category;
+            
+            ['all', 'dnd2024', 'mh'].forEach(cat => {
+                const btn = document.getElementById(`tab-${cat}`);
+                if (cat === category) {
+                    btn.className = "wax-tab active px-3 py-2 rounded border border-transparent font-bold min-h-[38px] flex-1 text-center";
+                } else {
+                    btn.className = "wax-tab px-3 py-2 rounded border border-transparent text-amber-200/80 hover:text-amber-100 min-h-[38px] flex-1 text-center";
+                }
+            });
+
+            renderView();
+        }
+
+        function setViewMode(mode) {
+            viewMode = mode;
+            const cardsBtn = document.getElementById('view-cards-btn');
+            const tableBtn = document.getElementById('view-table-btn');
+
+            if (mode === 'cards') {
+                cardsBtn.className = "px-2.5 py-1.5 rounded bg-amber-700/90 text-amber-100 font-bold flex items-center gap-1 min-h-[36px]";
+                tableBtn.className = "px-2.5 py-1.5 rounded text-amber-400/80 hover:text-amber-200 flex items-center gap-1 min-h-[36px]";
+            } else {
+                tableBtn.className = "px-2.5 py-1.5 rounded bg-amber-700/90 text-amber-100 font-bold flex items-center gap-1 min-h-[36px]";
+                cardsBtn.className = "px-2.5 py-1.5 rounded text-amber-400/80 hover:text-amber-200 flex items-center gap-1 min-h-[36px]";
+            }
+
+            renderView();
+        }
+
+        function togglePin(id, event) {
+            if (event) event.stopPropagation();
+            if (pinnedIds.has(id)) {
+                pinnedIds.delete(id);
+            } else {
+                pinnedIds.add(id);
+            }
+            renderView();
+        }
+
+        // High readability Keyword Formatter (Safe Regex Parsing)
+        function formatRuleText(text) {
+            if (!text) return '';
+            return text.replace(/\*\*(.*?)\*\*/g, (match, p1) => {
+                const trimmed = p1.trim();
+                if (trimmed.includes('優勢')) {
+                    return `<span class="kw-advantage">${p1}</span>`;
+                }
+                if (trimmed.includes('劣勢') || trimmed.includes('失敗')) {
+                    return `<span class="kw-disadvantage">${p1}</span>`;
+                }
+                if (trimmed.includes('失能') || trimmed.includes('重擊')) {
+                    return `<span class="kw-highlight">${p1}</span>`;
+                }
+                return `<strong class="text-stone-900 font-bold bg-amber-100/70 px-1 rounded">${p1}</strong>`;
+            });
+        }
+
+        function renderView() {
+            const container = document.getElementById('display-container');
+            const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+
+            // Filter items
+            let filtered = conditions.filter(item => {
+                const matchesCategory = (currentCategory === 'all') || (item.category === currentCategory);
+                const matchesSearch = item.name.toLowerCase().includes(searchTerm) ||
+                                      item.type.toLowerCase().includes(searchTerm) ||
+                                      item.mechanics.some(m => m.toLowerCase().includes(searchTerm));
+                return matchesCategory && matchesSearch;
+            });
+
+            // Sort pinned items to top
+            filtered.sort((a, b) => {
+                const aPinned = pinnedIds.has(a.id) ? 1 : 0;
+                const bPinned = pinnedIds.has(b.id) ? 1 : 0;
+                return bPinned - aPinned;
+            });
+
+            // Update Counters
+            document.getElementById('match-count').innerText = filtered.length;
+            const pinIndicator = document.getElementById('bookmarked-indicator');
+            if (pinnedIds.size > 0) {
+                pinIndicator.classList.remove('hidden');
+                document.getElementById('pin-count').innerText = pinnedIds.size;
+            } else {
+                pinIndicator.classList.add('hidden');
+            }
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="parchment-box rounded-xl p-8 text-center text-amber-900 border border-amber-800/40">
+                        <div class="text-4xl mb-2">📜</div>
+                        <h3 class="text-lg font-bold font-cinzel">未找到符合的狀態典籍</h3>
+                        <p class="text-sm text-stone-700 mt-1 font-sans">請嘗試修改關鍵字或搜尋其他名稱。</p>
+                    </div>
+                `;
+                return;
+            }
+
+            if (viewMode === 'cards') {
+                renderCards(container, filtered);
+            } else {
+                renderTable(container, filtered);
+            }
+        }
+
+        // Render Cards Mode (Mobile 1 col, Tablet 2 cols, Desktop 3 cols)
+        function renderCards(container, items) {
+            const cardsHtml = items.map(item => {
+                const isDnd = item.category === 'dnd2024';
+                const isPinned = pinnedIds.has(item.id);
+
+                const badgeBg = isDnd 
+                    ? 'bg-stone-900 text-amber-200 border-amber-700/60' 
+                    : 'bg-emerald-950 text-emerald-200 border-emerald-600/60';
+
+                const pinClass = isPinned 
+                    ? 'text-amber-500 font-bold scale-110' 
+                    : 'text-stone-400 hover:text-amber-700';
+
+                const formattedMechanics = item.mechanics.map(m => `
+                    <li class="flex items-start gap-2">
+                        <span class="text-amber-700 font-bold text-sm mt-0.5 shrink-0">✦</span>
+                        <span class="leading-normal text-stone-900 text-sm font-normal">${formatRuleText(m)}</span>
+                    </li>
+                `).join('');
+
+                return `
+                    <div class="parchment-box rounded-xl p-4 sm:p-5 flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:shadow-xl ${isPinned ? 'ring-2 ring-amber-500' : ''}">
+                        <div class="corner-ornament corner-tl"></div>
+                        <div class="corner-ornament corner-tr"></div>
+                        <div class="corner-ornament corner-bl"></div>
+                        <div class="corner-ornament corner-br"></div>
+
+                        <div>
+                            <!-- Card Title Header -->
+                            <div class="flex items-start justify-between gap-2 border-b border-amber-900/20 pb-2.5 mb-3">
+                                <div>
+                                    <h3 class="text-base sm:text-lg font-bold font-cinzel text-stone-950 tracking-wide">
+                                        ${item.name}
+                                    </h3>
+                                    <div class="flex flex-wrap items-center gap-1.5 mt-1">
+                                        <span class="px-2 py-0.5 rounded text-[11px] font-sans font-medium border ${badgeBg}">
+                                            ${item.categoryLabel}
+                                        </span>
+                                        <span class="px-2 py-0.5 rounded text-[11px] font-sans font-medium bg-amber-200/70 text-amber-950 border border-amber-400/60">
+                                            ${item.type}
+                                        </span>
+                                    </div>
+                                </div>
+                                <button onclick="togglePin('${item.id}', event)" class="${pinClass} text-2xl p-1 transition min-w-[36px] min-h-[36px] flex items-center justify-center" title="${isPinned ? '取消釘選' : '釘選至頂'}">
+                                    ${isPinned ? '★' : '☆'}
+                                </button>
+                            </div>
+
+                            <!-- Card Rules List -->
+                            <ul class="space-y-2.5">
+                                ${formattedMechanics}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5">${cardsHtml}</div>`;
+        }
+
+        // Render Mobile-Responsive Scrollable List/Table View
+        function renderTable(container, items) {
+            const rowsHtml = items.map((item, idx) => {
+                const isDnd = item.category === 'dnd2024';
+                const isPinned = pinnedIds.has(item.id);
+
+                const badgeBg = isDnd 
+                    ? 'bg-stone-900 text-amber-200 border-amber-600/60' 
+                    : 'bg-emerald-950 text-emerald-200 border-emerald-600/60';
+
+                const rowBg = idx % 2 === 0 ? 'bg-[#FAF8F2]' : 'bg-[#F3EDDF]';
+
+                const formattedMechanics = item.mechanics.map(m => `
+                    <li class="flex items-start gap-2">
+                        <span class="text-amber-700 font-bold text-xs mt-1 shrink-0">✦</span>
+                        <span class="leading-relaxed text-stone-900 text-sm font-normal">${formatRuleText(m)}</span>
+                    </li>
+                `).join('');
+
+                return `
+                    <tr class="${rowBg} hover:bg-amber-100/60 transition border-b border-amber-900/15">
+                        <td class="px-2.5 py-3.5 text-center align-top w-10">
+                            <button onclick="togglePin('${item.id}', event)" class="${isPinned ? 'text-amber-600' : 'text-stone-400'} text-xl hover:scale-110 transition">
+                                ${isPinned ? '★' : '☆'}
+                            </button>
+                        </td>
+
+                        <td class="px-3 py-3.5 align-top w-1/3 min-w-[150px]">
+                            <div class="font-bold text-stone-950 font-cinzel text-sm sm:text-base mb-1">${item.name}</div>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-sans border ${badgeBg}">${item.categoryLabel}</span>
+                                <span class="px-1.5 py-0.5 rounded text-[10px] font-sans bg-amber-200/60 text-amber-900 border border-amber-400/50">${item.type}</span>
+                            </div>
+                        </td>
+
+                        <td class="px-3 py-3.5 align-top">
+                            <ul class="space-y-1.5">
+                                ${formattedMechanics}
+                            </ul>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="parchment-box rounded-xl overflow-hidden border border-amber-800/50 shadow-xl">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-stone-950 text-amber-200 font-cinzel text-xs sm:text-sm border-b border-amber-600/80">
+                                <tr>
+                                    <th class="px-2.5 py-3 text-center w-10">★</th>
+                                    <th class="px-3 py-3 min-w-[150px] w-1/3 font-semibold">狀態名稱 / 類型</th>
+                                    <th class="px-3 py-3 min-w-[280px] font-semibold">核心機制與規則效應</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-amber-900/10">
+                                ${rowsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Initialize view on page load
+        window.onload = function() {
+            renderView();
+        };
+    </script>
+</body>
+</html>
